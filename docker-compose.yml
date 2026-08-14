@@ -1,0 +1,14 @@
+services:
+  jp-geocoder:
+    container_name: jp-geocoder
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - .:/workspace
+    env_file:
+      - path: .env
+        required: false
+    ports:
+      - "${DEMO_PORT:-8081}:8080"
+    command: ["tail", "-f", "/dev/null"]

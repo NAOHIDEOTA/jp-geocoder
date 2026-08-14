@@ -1,0 +1,90 @@
+/**
+ * 都道府県の切り出し。47件は固定なのでデータ非依存で持てる（Step 1 の範囲）。
+ * 市区町村以下は fetcher 経由の辞書で解く。
+ */
+import { toKey } from "./normalize.js";
+/** コード順。`都/道/府/県` を含む正式名 */
+export const PREFECTURES = [
+    ["01", "北海道"],
+    ["02", "青森県"],
+    ["03", "岩手県"],
+    ["04", "宮城県"],
+    ["05", "秋田県"],
+    ["06", "山形県"],
+    ["07", "福島県"],
+    ["08", "茨城県"],
+    ["09", "栃木県"],
+    ["10", "群馬県"],
+    ["11", "埼玉県"],
+    ["12", "千葉県"],
+    ["13", "東京都"],
+    ["14", "神奈川県"],
+    ["15", "新潟県"],
+    ["16", "富山県"],
+    ["17", "石川県"],
+    ["18", "福井県"],
+    ["19", "山梨県"],
+    ["20", "長野県"],
+    ["21", "岐阜県"],
+    ["22", "静岡県"],
+    ["23", "愛知県"],
+    ["24", "三重県"],
+    ["25", "滋賀県"],
+    ["26", "京都府"],
+    ["27", "大阪府"],
+    ["28", "兵庫県"],
+    ["29", "奈良県"],
+    ["30", "和歌山県"],
+    ["31", "鳥取県"],
+    ["32", "島根県"],
+    ["33", "岡山県"],
+    ["34", "広島県"],
+    ["35", "山口県"],
+    ["36", "徳島県"],
+    ["37", "香川県"],
+    ["38", "愛媛県"],
+    ["39", "高知県"],
+    ["40", "福岡県"],
+    ["41", "佐賀県"],
+    ["42", "長崎県"],
+    ["43", "熊本県"],
+    ["44", "大分県"],
+    ["45", "宮崎県"],
+    ["46", "鹿児島県"],
+    ["47", "沖縄県"],
+];
+/** 正規化キー → Entry。「東京」のような接尾辞なしも引けるようにする */
+const INDEX = new Map();
+for (const [code, name] of PREFECTURES) {
+    INDEX.set(toKey(name), { code, name, full: true });
+    // 「北海道」以外は接尾辞を落とした形も登録（東京 / 大阪 / 神奈川 …）
+    if (name !== "北海道")
+        INDEX.set(toKey(name.slice(0, -1)), { code, name, full: false });
+}
+/** 「京都市中京区」を「京都府 + 市中京区」と切らないためのガード */
+const CITY_SUFFIX = /^[市区町村郡]/u;
+/**
+ * 先頭から都道府県を1つ削り取る。無ければ null（省略は正常。DOC.md §6.1）。
+ * 最長一致を取る（「京都府」を「京都」で切らない）。
+ */
+export function consumePref(input) {
+    const key = toKey(input);
+    let best = null;
+    for (const [k, entry] of INDEX) {
+        if (!key.startsWith(k))
+            continue;
+        // 接尾辞なしの一致は、直後が市区町村の接尾辞なら採用しない
+        if (!entry.full && CITY_SUFFIX.test(key.slice(k.length)))
+            continue;
+        if (best === null || k.length > best.len)
+            best = { entry, len: k.length };
+    }
+    if (!best)
+        return null;
+    return {
+        code: best.entry.code,
+        name: best.entry.name,
+        rest: key.slice(best.len),
+    };
+}
+//# sourceMappingURL=pref.js.map

@@ -1,0 +1,5 @@
+# Cloudflare Pages 用。pages-deploy が dist-data/ にコピーする。
+# 配信データは誰でもどこからでも読めるようにする（公開データのため）
+/v1/*
+  Access-Control-Allow-Origin: *
+  Cache-Control: public, max-age=3600, stale-while-revalidate=86400

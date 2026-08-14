@@ -1,0 +1,576 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>jp-geocoder demo</title>
+    <link
+      rel="icon"
+      href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><text y='14' font-size='14'>📍</text></svg>"
+    />
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+      integrity="sha384-sHL9NAb7lN7rfvG5lfHpm643Xkcjzp4jFvuavGOndn6pjVqS6ny56CAt3nsEVT4H"
+      crossorigin="anonymous"
+    />
+    <style>
+      :root {
+        --bg: #ffffff;
+        --fg: #1a1a1a;
+        --muted: #6b7280;
+        --line: #e5e7eb;
+        --accent: #1d4ed8;
+        --card: #f9fafb;
+        --ok: #047857;
+        --ok-bg: #ecfdf5;
+        --err: #dc2626;
+        --err-bg: #fef2f2;
+        --warn: #b45309;
+        --weak: #6b7280;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg: #0f1115;
+          --fg: #e8e8e8;
+          --muted: #9aa1ac;
+          --line: #262b33;
+          --accent: #7aa2ff;
+          --card: #161a21;
+          --ok: #34d399;
+          --ok-bg: #0c2b22;
+          --err: #f87171;
+          --err-bg: #2d1416;
+          --warn: #fbbf24;
+          --weak: #9aa1ac;
+        }
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        padding: 1.5rem 1.25rem 3rem;
+        background: var(--bg);
+        color: var(--fg);
+        font:
+          16px/1.7 system-ui,
+          -apple-system,
+          "Hiragino Sans",
+          "Noto Sans JP",
+          sans-serif;
+      }
+      main {
+        max-width: 54rem;
+        margin: 0 auto;
+      }
+      h1 {
+        font-size: 1.4rem;
+        margin: 0 0 0.15rem;
+      }
+      .lead {
+        color: var(--muted);
+        font-size: 0.9rem;
+        margin: 0 0 1rem;
+      }
+      form {
+        display: flex;
+        gap: 0.5rem;
+      }
+      input {
+        flex: 1;
+        padding: 0.7rem 0.9rem;
+        font-size: 1rem;
+        border: 1.5px solid var(--line);
+        border-radius: 8px;
+        background: var(--bg);
+        color: var(--fg);
+        transition: border-color 0.15s;
+      }
+      input:focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 1px;
+      }
+      /* 検証状態。パッと見で OK / NG が分かるように入力欄自体を塗る */
+      input.is-ok {
+        border-color: var(--ok);
+      }
+      input.is-error {
+        border-color: var(--err);
+        background: var(--err-bg);
+      }
+      button {
+        padding: 0.7rem 1.25rem;
+        font-size: 1rem;
+        cursor: pointer;
+        border: 0;
+        border-radius: 8px;
+        background: var(--accent);
+        color: #fff;
+      }
+      /* 結果ステータス行 */
+      .status {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        min-height: 2.1rem;
+        margin: 0.5rem 0;
+        font-size: 0.9rem;
+      }
+      .status .chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        padding: 0.15rem 0.7rem;
+        border-radius: 999px;
+        font-weight: 600;
+      }
+      .status .chip.ok {
+        color: var(--ok);
+        background: var(--ok-bg);
+      }
+      .status .chip.err {
+        color: var(--err);
+        background: var(--err-bg);
+      }
+      .status .detail {
+        color: var(--muted);
+        font-size: 0.82rem;
+      }
+      .samples {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.4rem;
+        margin: 0.25rem 0 0.75rem;
+      }
+      .samples button {
+        background: var(--card);
+        color: var(--muted);
+        border: 1px solid var(--line);
+        font-size: 0.8rem;
+        padding: 0.2rem 0.6rem;
+      }
+      #map {
+        height: 420px;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        margin-bottom: 0.75rem;
+      }
+      .wrap {
+        overflow-x: auto;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        background: var(--card);
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.88rem;
+      }
+      th,
+      td {
+        text-align: left;
+        padding: 0.55rem 0.7rem;
+        border-bottom: 1px solid var(--line);
+        white-space: nowrap;
+      }
+      th {
+        color: var(--muted);
+        font-weight: 600;
+        font-size: 0.78rem;
+      }
+      tr:last-child td {
+        border-bottom: 0;
+      }
+      tbody tr {
+        cursor: pointer;
+      }
+      tbody tr:hover {
+        background: color-mix(in srgb, var(--accent) 8%, transparent);
+      }
+      tbody tr.selected {
+        background: color-mix(in srgb, var(--accent) 14%, transparent);
+      }
+      .addr {
+        white-space: normal;
+        min-width: 16rem;
+      }
+      /* 住所の分割結果（components）をチップで並べる */
+      .parts {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.25rem;
+        margin-top: 0.3rem;
+      }
+      .part {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.3rem;
+        font-size: 0.74rem;
+        padding: 0.05rem 0.45rem;
+        border: 1px solid var(--line);
+        border-radius: 5px;
+        background: var(--bg);
+        color: var(--fg);
+        white-space: nowrap;
+      }
+      .part .k {
+        color: var(--muted);
+        font-size: 0.68rem;
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      }
+      .badge {
+        display: inline-block;
+        padding: 0.05rem 0.45rem;
+        border-radius: 999px;
+        font-size: 0.75rem;
+        border: 1px solid currentColor;
+      }
+      .lv-rsdt,
+      .lv-parcel {
+        color: var(--ok);
+      }
+      .lv-block {
+        color: var(--warn);
+      }
+      .lv-oaza,
+      .lv-city,
+      .lv-pref {
+        color: var(--weak);
+      }
+      .empty {
+        color: var(--muted);
+        padding: 1rem;
+        font-size: 0.9rem;
+      }
+      /* レスポンス JSON の生表示 */
+      .raw {
+        margin-top: 0.75rem;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        background: var(--card);
+      }
+      .raw summary {
+        cursor: pointer;
+        padding: 0.55rem 0.9rem;
+        font-size: 0.85rem;
+        color: var(--muted);
+      }
+      .raw pre {
+        margin: 0;
+        padding: 0.75rem 0.9rem;
+        border-top: 1px solid var(--line);
+        overflow-x: auto;
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        font-size: 0.78rem;
+        line-height: 1.5;
+      }
+      code {
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        font-size: 0.85em;
+      }
+      footer {
+        margin-top: 2rem;
+        font-size: 0.8rem;
+        color: var(--muted);
+      }
+      a {
+        color: var(--accent);
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>jp-geocoder</h1>
+      <p class="lead">
+        住所を入力すると緯度経度に変換し、地図にピンを立てます。
+        サーバもDBも無し、CDN上の静的JSONだけで動いています。
+      </p>
+
+      <form id="f">
+        <input
+          id="q"
+          type="search"
+          placeholder="東京都世田谷区太子堂5-5-5"
+          autocomplete="off"
+        />
+        <button type="submit">検索</button>
+      </form>
+
+      <!-- OK / NG がひと目で分かるステータス行 -->
+      <div class="status" id="status"></div>
+
+      <div class="samples" id="samples"></div>
+
+      <div id="map"></div>
+
+      <div class="wrap">
+        <div id="out" class="empty">住所を入力してください。</div>
+      </div>
+
+      <!-- geocode() が返した JSON をそのまま見せる（API利用者向け） -->
+      <details class="raw" id="rawbox" open>
+        <summary>レスポンス JSON</summary>
+        <pre id="raw"></pre>
+      </details>
+
+      <footer>
+        <strong>matchLevel</strong> はどこまで解決できたか、
+        <strong>accuracy</strong> はその座標の品質です。 <code>rsdt</code>=号 /
+        <code>block</code>=番 / <code>parcel</code>=筆 /
+        <code>oaza</code>=町字。<code>surveyed</code>
+        以外は代表点なので、探した住所そのものの点ではありません。
+        <br />
+        出典: デジタル庁 アドレス・ベース・レジストリ / 国土交通省 位置参照情報
+        —
+        <a
+          href="https://github.com/NAOHIDEOTA/jp-geocoder/blob/master/DATA_LICENSE.md"
+          >DATA_LICENSE.md</a
+        >
+        / 地図: © OpenStreetMap contributors
+      </footer>
+    </main>
+
+    <script
+      src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+      integrity="sha384-cxOPjt7s7Iz04uaHJceBmS+qpjv2JkIHNVcuOrM+YHwZOmJGBXI00mdUXEq65HTH"
+      crossorigin="anonymous"
+    ></script>
+    <script type="module">
+      /**
+       * ライブラリは同じ場所の lib/（dist のコピー。make demo が更新する）。
+       * データは Cloudflare Pages から取る。
+       */
+      const LIB = "./lib/index.js";
+      const BASE = "https://jp-geocoder.pages.dev/v1";
+
+      const { createGeocoder } = await import(LIB);
+
+      // fetch 回数を測るための計装つき fetcher（DOC.md §1.2 の検証）
+      let fetchCount = 0;
+      const memo = new Map();
+      const fetcher = {
+        async get(path) {
+          const key = path.replace(/^\//, "");
+          let hit = memo.get(key);
+          if (!hit) {
+            fetchCount++;
+            hit = fetch(`${BASE}/${key}`).then((r) => {
+              if (!r.ok) throw new Error(`${r.status} ${key}`);
+              return r.json();
+            });
+            memo.set(key, hit);
+          }
+          return hit;
+        },
+      };
+
+      const geo = createGeocoder({ baseUrl: BASE, fetcher, limit: 5 });
+
+      // ---------------------------------------------------------------- 地図
+      const map = L.map("map").setView([36.2, 137.5], 5); // 日本全体
+      L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
+        attribution: "&copy; OpenStreetMap contributors",
+        maxZoom: 19,
+      }).addTo(map);
+      let marker = null;
+
+      /** matchLevel に応じたズーム。粗い解決で寄りすぎない */
+      const ZOOM = {
+        rsdt: 17,
+        block: 17,
+        parcel: 16,
+        oaza: 15,
+        city: 12,
+        pref: 9,
+      };
+
+      function pin(c) {
+        const pos = [c.lat, c.lng];
+        if (marker) marker.remove();
+        marker = L.marker(pos).addTo(map);
+        marker
+          .bindPopup(
+            `<b>${esc(c.address)}</b><br>` +
+              `${c.lat}, ${c.lng}<br>` +
+              `<code>${c.matchLevel} / ${c.accuracy}</code>`,
+          )
+          .openPopup();
+        map.flyTo(pos, ZOOM[c.matchLevel] ?? 14, { duration: 0.6 });
+      }
+
+      function unpin() {
+        if (marker) {
+          marker.remove();
+          marker = null;
+        }
+      }
+
+      // ---------------------------------------------------------------- UI
+      const q = document.getElementById("q");
+      const status = document.getElementById("status");
+      const out = document.getElementById("out");
+      const raw = document.getElementById("raw");
+
+      // あえて難しい入力を並べている。それぞれ別の解決機構の実演になっている
+      const SAMPLES = [
+        "世田ヶ谷区太子道5-5-5", // 二重タイポ（ヶ + 道→堂）
+        "世田谷区たいしどう5-5-5", // 町名がカナ
+        "東京都　世田谷区　太子堂５－５－５　キャロットタワー26F", // 全角・空白・建物名
+        "中央区銀座四丁目五番六号", // 漢数字
+        "清水市旭町6-8", // 消滅した市（→静岡市清水区）
+        "浦和市高砂3-15-1", // 旧市名（→さいたま市浦和区）
+        "京都市下京区四条通烏丸東入長刀鉾町", // 京都の通り名
+        "札幌市北区北12条西3丁目1-1", // 条丁目
+        "岩手県花巻市石鳥谷町好地第3地割20", // 岩手の地割
+        "沖縄県中頭郡北谷町字美浜16-2", // 字 + 地番
+        "存在しない住所テスト", // NG の見た目確認
+      ];
+      const box = document.getElementById("samples");
+      for (const s of SAMPLES) {
+        const b = document.createElement("button");
+        b.type = "button";
+        b.textContent = s;
+        b.addEventListener("click", () => {
+          q.value = s;
+          run(s);
+        });
+        box.append(b);
+      }
+
+      const esc = (s) =>
+        String(s ?? "").replace(
+          /[&<>"]/g,
+          (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c],
+        );
+
+      /** 入力欄とステータス行に OK / NG を反映する */
+      function setState(kind, text, detail = "") {
+        q.classList.toggle("is-ok", kind === "ok");
+        q.classList.toggle("is-error", kind === "error");
+        if (kind === "none") {
+          status.innerHTML = "";
+          return;
+        }
+        const cls = kind === "ok" ? "ok" : "err";
+        const icon = kind === "ok" ? "✓" : "✕";
+        status.innerHTML =
+          `<span class="chip ${cls}">${icon} ${esc(text)}</span>` +
+          (detail ? `<span class="detail">${esc(detail)}</span>` : "");
+      }
+
+      /** components（住所の分割結果）を「県 | 市 | 町 | 番地」のチップ列にする */
+      function partsOf(c) {
+        const p = c.components;
+        const items = [
+          ["pref", p.pref],
+          ["county", p.county],
+          ["city", p.city],
+          ["oaza", p.oaza],
+          ["chome", p.chome != null ? `${p.chome}丁目` : null],
+          ["koaza", p.koaza],
+          ["block", p.block != null ? `${p.block}番` : null],
+          ["rsdt", p.rsdt != null ? `${p.rsdt}号` : null],
+          ["parcel", p.parcel ? `${p.parcel.join("-")}番地` : null],
+          ["building", c.building],
+        ].filter(([, v]) => v != null && v !== "");
+        return items
+          .map(
+            ([k, v]) =>
+              `<span class="part"><span class="k">${k}</span>${esc(v)}</span>`,
+          )
+          .join("");
+      }
+
+      function renderTable(candidates) {
+        const rows = candidates
+          .map(
+            (c, i) => `
+          <tr data-i="${i}" class="${i === 0 ? "selected" : ""}">
+            <td class="addr">${esc(c.address)}
+              <div class="parts">${partsOf(c)}</div></td>
+            <td><code>${c.lat}, ${c.lng}</code></td>
+            <td><span class="badge lv-${esc(c.matchLevel)}">${esc(c.matchLevel)}</span></td>
+            <td>${esc(c.accuracy)}</td>
+            <td>${c.score}</td>
+          </tr>`,
+          )
+          .join("");
+        out.className = "";
+        out.innerHTML = `<table>
+          <thead><tr><th>住所（分割結果つき）</th><th>緯度経度</th><th>matchLevel</th><th>accuracy</th><th>score</th></tr></thead>
+          <tbody>${rows}</tbody></table>`;
+
+        // 行クリックでその候補にピンを立て直す
+        out.querySelectorAll("tbody tr").forEach((tr) => {
+          tr.addEventListener("click", () => {
+            out
+              .querySelectorAll("tr.selected")
+              .forEach((x) => x.classList.remove("selected"));
+            tr.classList.add("selected");
+            pin(candidates[Number(tr.dataset.i)]);
+          });
+        });
+      }
+
+      let seq = 0;
+      async function run(text) {
+        const input = text.trim();
+        if (!input) {
+          setState("none");
+          unpin();
+          out.className = "empty";
+          out.textContent = "住所を入力してください。";
+          return;
+        }
+        const my = ++seq;
+        const before = fetchCount;
+        const t = performance.now();
+        let result;
+        try {
+          result = await geo.geocode(input);
+        } catch (e) {
+          if (my !== seq) return;
+          setState("error", "検索に失敗しました", String(e.message ?? e));
+          unpin();
+          raw.textContent = String(e.stack ?? e);
+          return;
+        }
+        if (my !== seq) return; // 古いクエリの結果は捨てる
+
+        const ms = performance.now() - t;
+        raw.textContent = JSON.stringify(result, null, 2);
+        const c = result.candidates[0];
+        if (!c) {
+          // NG: 解決できない = バリデーションエラーとして見せる
+          setState("error", "住所を解決できません", "入力を確認してください");
+          unpin();
+          out.className = "empty";
+          out.textContent = "候補なし。";
+          return;
+        }
+
+        // OK: 先頭候補に即ピン
+        setState(
+          "ok",
+          `${c.lat}, ${c.lng}`,
+          `${c.matchLevel}/${c.accuracy} / ${result.candidates.length}件 / ${ms.toFixed(0)}ms / fetch ${fetchCount - before}回`,
+        );
+        pin(c);
+        renderTable(result.candidates);
+      }
+
+      // 入力のたびに自動検索（500ms デバウンス）。Enter/ボタンは即時
+      let timer = null;
+      q.addEventListener("input", () => {
+        clearTimeout(timer);
+        timer = setTimeout(() => run(q.value), 500);
+      });
+      document.getElementById("f").addEventListener("submit", (e) => {
+        e.preventDefault();
+        clearTimeout(timer);
+        run(q.value);
+      });
+    </script>
+  </body>
+</html>

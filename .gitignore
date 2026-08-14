@@ -1,0 +1,13 @@
+/node_modules
+/dist
+/dist-data
+/data/*
+!/data/*.py
+.env
+.wrangler
+.history
+.DS_Store
+.pnpm-store
+DOC.md
+/docs/lib/**/*.d.ts
+/docs/lib/**/*.map

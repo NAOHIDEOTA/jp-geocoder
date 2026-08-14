@@ -1,0 +1,54 @@
+{
+  "name": "jp-geocoder",
+  "version": "0.0.0",
+  "description": "Japanese address geocoder powered by the Digital Agency Address Base Registry. No server, no database — static JSON over CDN. 日本の住所文字列を緯度経度に変換する",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "files": [
+    "dist/"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "test": "pnpm run build && node --test \"tests/**/*.test.mjs\"",
+    "typecheck": "tsc --noEmit",
+    "prepublishOnly": "pnpm run build"
+  },
+  "keywords": [
+    "geocoding",
+    "geocoder",
+    "japan",
+    "japanese-address",
+    "address",
+    "latitude",
+    "longitude",
+    "cloudflare-r2",
+    "住所",
+    "ジオコーディング",
+    "緯度経度"
+  ],
+  "license": "MIT",
+  "author": "NAOHIDEOTA",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/NAOHIDEOTA/jp-geocoder.git"
+  },
+  "bugs": {
+    "url": "https://github.com/NAOHIDEOTA/jp-geocoder/issues"
+  },
+  "homepage": "https://github.com/NAOHIDEOTA/jp-geocoder#readme",
+  "engines": {
+    "node": ">=20"
+  },
+  "packageManager": "pnpm@10.33.2",
+  "devDependencies": {
+    "typescript": "^6.0.2",
+    "wrangler": "^4.0.0"
+  }
+}
