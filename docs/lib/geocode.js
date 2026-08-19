@@ -10,8 +10,9 @@
 import { consumeAll } from "./core/consume.js";
 import { fuzzyPrefix } from "./core/distance.js";
 import { toKey, toExactKey } from "./core/normalize.js";
-import { consumePref } from "./core/pref.js";
+import { consumePref, resolvePref } from "./core/pref.js";
 import { CityIndex } from "./core/cities.js";
+import { buildMunicipalities } from "./core/municipalities.js";
 import { parseTail } from "./core/banchi.js";
 import { lookupTown, isResidential, townChome, townCode, townId, townKoaza, townLat, townLng, townName, townOaza, } from "./core/towns.js";
 import { assignBanGo, lookupRsdt } from "./core/rsdt.js";
@@ -31,6 +32,13 @@ export const ATTRIBUTION = [
  * 配信先を変えるときはここ1行を直す（利用者側の指定は不要）。
  */
 export const DEFAULT_BASE_URL = "https://jp-geocoder.pages.dev/v1";
+/**
+ * 市区町村一覧の出典。cities.json は ABR だけから作られるので、
+ * 位置参照情報・CODH は挙げない（使っていないものを出典に書かない）。
+ */
+export const CITY_ATTRIBUTION = [
+    "デジタル庁 アドレス・ベース・レジストリ",
+];
 /** 号まで降りる候補の数。§1.2 の fetch 回数を守るための上限 */
 const DESCEND_LIMIT = 2;
 /** 候補の並べ替えに使う解決の深さ。同名町字が複数あるとき最も強い手がかり（§7.1） */
@@ -382,6 +390,18 @@ export function createGeocoder(options = {}) {
                 (b.record.towns ?? 0) - (a.record.towns ?? 0));
             return {
                 candidates: scored.slice(0, limit).map((s) => s.candidate),
+                attribution,
+            };
+        },
+        async listMunicipalities(pref, options = {}) {
+            const attribution = [...CITY_ATTRIBUTION];
+            const resolved = resolvePref(pref);
+            // 該当しない都道府県は空配列を返す（例外にしない）
+            if (!resolved)
+                return { municipalities: [], attribution };
+            const index = await loadIndex();
+            return {
+                municipalities: buildMunicipalities(index.records, resolved.code, options.designatedCity ?? "wards"),
                 attribution,
             };
         },

@@ -87,4 +87,28 @@ export function consumePref(input) {
         rest: key.slice(best.len),
     };
 }
+/**
+ * 都道府県そのものを1つに解決する（consumePref と違い、残りがあれば不成立）。
+ *
+ * 受け付ける形:
+ *   - コード … 1〜47 / "01"〜"47"（全角数字も可）
+ *   - 名称   … "神奈川県" / "神奈川"（接尾辞の有無どちらも）
+ *
+ * 解決できなければ null。「東京都渋谷区」のように都道府県より下が続くものは
+ * 都道府県の指定ではないので null を返す。
+ */
+export function resolvePref(input) {
+    const raw = String(input).normalize("NFKC").trim();
+    if (!raw)
+        return null;
+    if (/^\d{1,2}$/.test(raw)) {
+        const code = raw.padStart(2, "0");
+        const found = PREFECTURES.find(([c]) => c === code);
+        return found ? { code: found[0], name: found[1] } : null;
+    }
+    const match = consumePref(raw);
+    if (!match || match.rest !== "")
+        return null;
+    return { code: match.code, name: match.name };
+}
 //# sourceMappingURL=pref.js.map
