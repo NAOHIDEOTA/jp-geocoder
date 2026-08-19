@@ -44,3 +44,24 @@ export async function* readZipCsv(zipPath) {
     yield row;
   }
 }
+
+/** 非圧縮の CSV を { 列名: 値 } で yield する（ekidata のように zip でない入力用） */
+export async function* readCsv(path) {
+  const { createReadStream } = await import("node:fs");
+  const rl = createInterface({
+    input: createReadStream(path),
+    crlfDelay: Infinity,
+  });
+  let header = null;
+  for await (const line of rl) {
+    if (!line) continue;
+    const f = parseLine(line);
+    if (!header) {
+      header = f;
+      continue;
+    }
+    const row = {};
+    for (let i = 0; i < header.length; i++) row[header[i]] = f[i] ?? "";
+    yield row;
+  }
+}

@@ -16,6 +16,7 @@
 - **軽い** — パッケージはコードのみでデータ非同梱。1検索で読むのは数十〜数百KB、CDNキャッシュ時 100〜200ms（実測）
 - **住所の分割結果つき** — 都道府県・市区町村・大字・丁目・番・号を構造化して返す
 - **市区町村の一覧が引ける** — 都道府県から市区町村を列挙できる（フォームの選択肢用）
+- **最寄り駅が引ける** — 全国 10,462駅。住所を渡せば座標を経由して最寄り駅まで一気に出せる
 - **表記揺れに強い** — 異体字・ヶケ・漢数字・カナ入力・タイポ・旧市町村名を吸収
 - **正直な精度申告** — どこまで解決できたか（`matchLevel`）と座標の品質（`accuracy`）を必ず返す
 - **TypeScript** — 完全な型定義付き
@@ -146,6 +147,38 @@ const { municipalities } = await geocoder.listMunicipalities("神奈川県");
 - 東京23区は市と区に割らず単独で返します（`{municipality:"千代田区"}`）
 - 政令指定都市の本体だけの単独エントリは作りません（必ず `ward` つきで現れます）
 
+### 駅・路線
+
+全国 10,462駅・597路線（廃止・移転駅は除外済み）。データは `rail.json` 1ファイルで、
+最初の呼び出しで1回だけ取得したあとはメモリ上で解決します（fetch 0回）。
+
+```ts
+// 住所から最寄り駅（geocode と nearestStations の合成）
+const { candidate, stations } = await geocoder.nearestStationsByAddress(
+  "東京都世田谷区太子堂5-5-5",
+  { limit: 3, groupByStation: true },
+);
+// 235m 西太子堂（東急世田谷線） / 337m 三軒茶屋（東急田園都市線） …
+```
+
+| Method                                        | Returns              | Description                          |
+| --------------------------------------------- | -------------------- | ------------------------------------ |
+| `nearestStations(lat, lng, options?)`          | `NearbyStationsResult` | 座標に近い順                        |
+| `nearestStationsByAddress(address, options?)`  | 上記 + `candidate`   | 住所から最寄り駅                     |
+| `listStations(query?)`                         | `StationsResult`     | 都道府県・路線で絞り込み             |
+| `getStation(code)`                             | `StationsResult`     | 駅コードで1件                        |
+| `listLines(pref)`                              | `LinesResult`        | その都道府県に乗り入れる路線         |
+
+`NearestStationsOptions`:
+
+| Option            | Default | Description                                              |
+| ----------------- | ------- | -------------------------------------------------------- |
+| `limit`           | `10`    | 返す件数                                                  |
+| `groupByStation`  | `false` | 乗換駅を1件にまとめる。false だと「東京」が路線の数だけ並ぶ |
+| `maxDistance`     | —       | この距離[m]より遠い駅を返さない                           |
+
+距離は Haversine（球面近似）による直線距離[m]です。徒歩の経路距離ではありません。
+
 ### `components`（住所の分割結果）
 
 | Field    | Example      | Description                                      |
@@ -226,6 +259,25 @@ interface Municipality {
 interface MunicipalityOptions {
   designatedCity?: "wards" | "nested"; // 既定 "wards"
 }
+
+interface Station {
+  code: number; // 駅コード
+  groupCode: number; // 乗換で結ばれる駅どうしで同じ値
+  name: string;
+  lineCode: number;
+  lineName: string;
+  company: string;
+  pref: number; // 都道府県コード 1〜47
+  postalCode: string; // ハイフンなし7桁
+  address: string;
+  lat: number;
+  lng: number;
+}
+
+interface NearbyStation {
+  station: Station;
+  distance: number; // 直線距離[m]
+}
 ```
 
 ## Limitations
@@ -285,6 +337,7 @@ make demo       # デモをローカルで確認
 - デジタル庁「アドレス・ベース・レジストリ」
 - 国土交通省「位置参照情報」
 - 『歴史的行政区域データセットβ版』（CODH作成）
+- 駅データ.jp（駅・路線）
 
 詳細は [DATA_LICENSE.md](./DATA_LICENSE.md)。
 

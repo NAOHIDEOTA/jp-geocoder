@@ -12,6 +12,14 @@ export type {
   Municipality,
   MunicipalityOptions,
   MunicipalitiesResult,
+  Station,
+  Line,
+  NearbyStation,
+  StationQuery,
+  NearestStationsOptions,
+  StationsResult,
+  NearbyStationsResult,
+  LinesResult,
 } from "./types.js";
 
 export type { CityLevel, CityRecord, CitiesFile } from "./core/cities.js";
@@ -20,6 +28,7 @@ export {
   createGeocoder,
   ATTRIBUTION,
   CITY_ATTRIBUTION,
+  RAIL_ATTRIBUTION,
   DEFAULT_BASE_URL,
 } from "./geocode.js";
 export { createHttpFetcher } from "./fetcher/httpFetcher.js";
@@ -31,3 +40,6 @@ export { expandAliases } from "./core/aliases.js";
 
 // 都道府県の解決（コード・名称どちらからでも引ける）
 export { resolvePref, PREFECTURES } from "./core/pref.js";
+
+// 2点間の距離（最寄り駅の距離計算に使っているもの）
+export { distanceMeters } from "./core/rail.js";

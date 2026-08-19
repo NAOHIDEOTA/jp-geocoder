@@ -6,6 +6,7 @@ export
         build-part-parcel build-part-alias validate \
         verify verify-accuracy \
         data-all data-part-catalog data-part-abr data-part-isj data-part-codh \
+        data-part-ekidata build-part-rail \
         measure-source \
         publish-patch publish-minor
 
@@ -50,6 +51,18 @@ data-part-abr:
 	docker exec jp-geocoder sh -c "cd data && python3 download.py town"
 	docker exec jp-geocoder sh -c "cd data && python3 download.py parcel"
 
+# 駅データ.jp。**自動取得できない**（ダウンロードに会員登録＋ログインが要る）。
+# https://ekidata.jp/dl/ から station / line / company の CSV を落として
+# data/ekidata/ に置く。ここでは置かれているかだけを確認する。
+data-part-ekidata:
+	@for p in station line company; do \
+	  ls data/ekidata/$$p*.csv >/dev/null 2>&1 || { \
+	    echo "data/ekidata/$$p*.csv がありません。https://ekidata.jp/dl/ から取得して置いてください"; \
+	    exit 1; }; \
+	done
+	@echo "data/ekidata: OK"
+	@ls -1 data/ekidata
+
 # 国交省 位置参照情報（約126MB）。町字座標の補完と、精度検証(verify-accuracy)の正解データ
 data-part-isj:
 	docker exec jp-geocoder sh -c "cd data && python3 download_isj.py"
@@ -66,7 +79,7 @@ measure-source:
 # ---- 索引ビルド（data/ → dist-data/v1） -------------------------------------
 # 配信物（dist-data/v1、約2.0GB）を生成し、最後に検証ゲートを通す
 build-data: build-part-version build-part-cities build-part-towns build-part-rsdt \
-            build-part-parcel build-part-alias validate
+            build-part-parcel build-part-alias build-part-rail validate
 
 # 元データの版（version.json）。dist-data は git に入れないので、
 # 「配信中のものがどの版で作られたか」の唯一の記録になる
@@ -92,6 +105,10 @@ build-part-parcel:
 # 旧自治体名のエイリアス（alias.json）。町字索引を読むので towns の後に実行する
 build-part-alias:
 	docker exec jp-geocoder node --max-old-space-size=6144 scripts/build/build-alias.mjs
+
+# 駅・路線の索引（rail.json）。1ファイル・全国分。data-part-ekidata が前提
+build-part-rail:
+	docker exec jp-geocoder node scripts/build/build-rail.mjs
 
 # 配信物の検証ゲート。日本の範囲内か等の絶対検査＋前回ビルド(metrics.json)との回帰比較
 validate:
