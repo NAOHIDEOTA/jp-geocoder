@@ -75,6 +75,33 @@ export interface Fetcher {
   get(path: string): Promise<unknown>;
 }
 
+/**
+ * 政令指定都市の行政区をどう並べるか。政令市以外の出力は影響を受けない。
+ * - "wards"  … 行政区ごとに1件（ward は常に1要素）。横浜市なら18件並ぶ
+ * - "nested" … 市を1件にまとめ、ward に全区を並べる
+ */
+export type DesignatedCityMode = "wards" | "nested";
+
+/** 市区町村一覧の1件 */
+export interface Municipality {
+  /** 市区町村名。行政区は市名（「横浜市」）になり、区名は ward に入る */
+  municipality: string;
+  /** 政令指定都市の行政区。政令市以外では省略される */
+  ward?: string[];
+}
+
+export interface MunicipalityOptions {
+  /** 政令指定都市の扱い。既定 "wards" */
+  designatedCity?: DesignatedCityMode;
+}
+
+export interface MunicipalitiesResult {
+  /** 団体コード順。該当する都道府県が無ければ空配列 */
+  municipalities: Municipality[];
+  /** 出典表示。省略不可（DOC.md §2） */
+  attribution: string[];
+}
+
 export interface GeocoderOptions {
   /** 配信元。省略すると DEFAULT_BASE_URL（自前で配信する場合だけ指定する） */
   baseUrl?: string;
@@ -85,4 +112,12 @@ export interface GeocoderOptions {
 
 export interface Geocoder {
   geocode(address: string): Promise<GeocodeResult>;
+  /**
+   * 都道府県に属する市区町村の一覧を返す。
+   * @param pref 都道府県コード（1〜47 / "01"〜"47"）または名称（"神奈川県" / "神奈川"）
+   */
+  listMunicipalities(
+    pref: string | number,
+    options?: MunicipalityOptions,
+  ): Promise<MunicipalitiesResult>;
 }

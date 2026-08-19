@@ -277,15 +277,182 @@
       a {
         color: var(--accent);
       }
+
+      /* ---- 何ができるか の3点セット ---- */
+      .points {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+        gap: 0.6rem;
+        list-style: none;
+        margin: 1rem 0 1.25rem;
+        padding: 0;
+      }
+      .points li {
+        padding: 0.7rem 0.9rem;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        background: var(--card);
+        font-size: 0.86rem;
+        line-height: 1.6;
+      }
+      .points b {
+        display: block;
+        font-size: 0.95rem;
+        margin-bottom: 0.15rem;
+      }
+      .points span {
+        color: var(--muted);
+      }
+      /* ---- タブ ---- */
+      .tabs {
+        display: flex;
+        gap: 0.25rem;
+        border-bottom: 2px solid var(--line);
+        margin-bottom: 1.1rem;
+      }
+      .tabs button {
+        background: transparent;
+        color: var(--muted);
+        border: 0;
+        border-bottom: 2px solid transparent;
+        border-radius: 0;
+        margin-bottom: -2px;
+        padding: 0.6rem 0.9rem;
+        font-size: 0.95rem;
+        font-weight: 600;
+      }
+      .tabs button.on {
+        color: var(--accent);
+        border-bottom-color: var(--accent);
+      }
+      /* ---- matchLevel / accuracy の凡例 ---- */
+      .legend {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.35rem 0.9rem;
+        margin: 0.7rem 0 0;
+        padding: 0.7rem 0.9rem;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        background: var(--card);
+        font-size: 0.78rem;
+        color: var(--muted);
+      }
+      .legend .row {
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+      }
+      .legend .t {
+        width: 100%;
+        font-weight: 600;
+        color: var(--fg);
+        font-size: 0.8rem;
+      }
+      /* ---- 市区町村パネル ---- */
+      .controls {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0.6rem;
+        margin-bottom: 0.5rem;
+      }
+      .controls select {
+        padding: 0.6rem 0.7rem;
+        font-size: 1rem;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--bg);
+        color: var(--fg);
+      }
+      .seg {
+        display: inline-flex;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        overflow: hidden;
+      }
+      .seg button {
+        background: var(--bg);
+        color: var(--muted);
+        border: 0;
+        border-radius: 0;
+        font-size: 0.82rem;
+        padding: 0.55rem 0.8rem;
+      }
+      .seg button.on {
+        background: var(--accent);
+        color: #fff;
+      }
+      .seg button + button {
+        border-left: 1px solid var(--line);
+      }
+      .hint {
+        font-size: 0.8rem;
+        color: var(--muted);
+        margin: 0.1rem 0 0.7rem;
+      }
+      /* 区名のチップ */
+      .wards {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.25rem;
+      }
+      .wards span {
+        font-size: 0.75rem;
+        padding: 0.1rem 0.45rem;
+        border-radius: 999px;
+        background: color-mix(in srgb, var(--accent) 12%, transparent);
+        color: var(--accent);
+      }
+      td.muni {
+        font-weight: 600;
+        white-space: nowrap;
+      }
+      td.wcell {
+        white-space: normal;
+        width: 100%;
+      }
+      .num {
+        color: var(--muted);
+        font-variant-numeric: tabular-nums;
+        text-align: right;
+      }
     </style>
   </head>
   <body>
     <main>
       <h1>jp-geocoder</h1>
       <p class="lead">
-        住所を入力すると緯度経度に変換し、地図にピンを立てます。
-        サーバもDBも無し、CDN上の静的JSONだけで動いています。
+        日本の住所を扱うための、<strong>サーバもDBもAPIキーも要らない</strong>
+        JavaScript ライブラリです。このページ自体が実物で、
+        あなたのブラウザの中だけで動いています（サーバ側の処理はゼロ）。
       </p>
+
+      <ul class="points">
+        <li>
+          <b>住所 → 緯度経度</b>
+          <span
+            >表記ゆれ・タイポ・旧市町村名・カナ入力を吸収して解決します。</span
+          >
+        </li>
+        <li>
+          <b>都道府県 → 市区町村</b>
+          <span>フォームの選択肢に使える市区町村の一覧を返します。</span>
+        </li>
+        <li>
+          <b>どこまで解けたかを必ず返す</b>
+          <span
+            >「たぶん合ってる座標」を黙って返しません。粒度と品質を明示します。</span
+          >
+        </li>
+      </ul>
+
+      <nav class="tabs" id="tabs">
+        <button type="button" data-tab="geo" class="on">住所 → 緯度経度</button>
+        <button type="button" data-tab="muni">都道府県 → 市区町村</button>
+      </nav>
+
+      <section id="tab-geo">
 
       <form id="f">
         <input
@@ -309,17 +476,65 @@
       </div>
 
       <!-- geocode() が返した JSON をそのまま見せる（API利用者向け） -->
-      <details class="raw" id="rawbox" open>
-        <summary>レスポンス JSON</summary>
-        <pre id="raw"></pre>
-      </details>
+        <details class="raw" id="rawbox" open>
+          <summary>レスポンス JSON</summary>
+          <pre id="raw"></pre>
+        </details>
+
+        <div class="legend">
+          <span class="t">matchLevel — どこまで解決できたか</span>
+          <span class="row"
+            ><span class="badge lv-rsdt">rsdt</span>号（住居表示）</span
+          >
+          <span class="row"
+            ><span class="badge lv-block">block</span>番（街区）</span
+          >
+          <span class="row"
+            ><span class="badge lv-parcel">parcel</span>筆（地番）</span
+          >
+          <span class="row"><span class="badge lv-oaza">oaza</span>町字</span>
+          <span class="row"><span class="badge lv-city">city</span>市区町村</span>
+          <span class="row"><span class="badge lv-pref">pref</span>都道府県</span>
+          <span class="t">accuracy — その座標の品質</span>
+          <span class="row"><code>surveyed</code> 測量済み。実測点</span>
+          <span class="row"><code>legacy</code> 公図由来。数十m〜百mずれうる</span>
+          <span class="row"
+            ><code>representative</code> 代表点。探した対象の点ではない</span
+          >
+        </div>
+      </section>
+
+      <section id="tab-muni" hidden>
+        <div class="controls">
+          <select id="pref"></select>
+          <div class="seg" id="mode">
+            <button type="button" data-mode="wards" class="on">wards</button>
+            <button type="button" data-mode="nested">nested</button>
+          </div>
+        </div>
+        <p class="hint">
+          <code>designatedCity</code> は<strong>政令指定都市20市の見せ方だけ</strong>を
+          切り替えます。<code>wards</code> は行政区ごとに1件（横浜市なら18件並ぶ）、
+          <code>nested</code> は市1件に区をまとめます。 特別区・郡部の町村・通常の市は
+          どちらでも同じ形です。郡名は含めません（「三浦郡葉山町」ではなく「葉山町」）。
+        </p>
+
+        <div class="status" id="muni-status"></div>
+
+        <div class="wrap">
+          <div id="muni-out" class="empty">都道府県を選んでください。</div>
+        </div>
+
+        <details class="raw" open>
+          <summary>レスポンス JSON</summary>
+          <pre id="muni-raw"></pre>
+        </details>
+      </section>
 
       <footer>
-        <strong>matchLevel</strong> はどこまで解決できたか、
-        <strong>accuracy</strong> はその座標の品質です。 <code>rsdt</code>=号 /
-        <code>block</code>=番 / <code>parcel</code>=筆 /
-        <code>oaza</code>=町字。<code>surveyed</code>
-        以外は代表点なので、探した住所そのものの点ではありません。
+        このページはビルド済みの <code>lib/</code> をそのまま読み込み、データは
+        CDN 上の静的 JSON から取っています。検索のたびに何ファイル取りに行ったかは
+        結果行の <code>fetch</code> に出ます（一度読んだものは再取得しません）。
         <br />
         出典: デジタル庁 アドレス・ベース・レジストリ / 国土交通省 位置参照情報
         —
@@ -344,7 +559,7 @@
       const LIB = "./lib/index.js";
       const BASE = "https://jp-geocoder.pages.dev/v1";
 
-      const { createGeocoder } = await import(LIB);
+      const { createGeocoder, PREFECTURES } = await import(LIB);
 
       // fetch 回数を測るための計装つき fetcher（DOC.md §1.2 の検証）
       let fetchCount = 0;
@@ -571,6 +786,87 @@
         clearTimeout(timer);
         run(q.value);
       });
+
+      // ------------------------------------------------------------ タブ切替
+      const tabs = document.getElementById("tabs");
+      tabs.addEventListener("click", (e) => {
+        const b = e.target.closest("button[data-tab]");
+        if (!b) return;
+        for (const x of tabs.querySelectorAll("button"))
+          x.classList.toggle("on", x === b);
+        document.getElementById("tab-geo").hidden = b.dataset.tab !== "geo";
+        document.getElementById("tab-muni").hidden = b.dataset.tab !== "muni";
+        // 隠れている間にサイズが変わっているので地図を測り直す
+        if (b.dataset.tab === "geo") map.invalidateSize();
+        if (b.dataset.tab === "muni" && !prefSel.value) {
+          prefSel.value = "14";
+          runMuni();
+        }
+      });
+
+      // ------------------------------------------------ 都道府県 → 市区町村
+      const prefSel = document.getElementById("pref");
+      const muniStatus = document.getElementById("muni-status");
+      const muniOut = document.getElementById("muni-out");
+      const muniRaw = document.getElementById("muni-raw");
+      let muniMode = "wards";
+
+      prefSel.innerHTML =
+        '<option value="">都道府県を選択</option>' +
+        PREFECTURES.map(
+          ([code, name]) => `<option value="${code}">${name}</option>`,
+        ).join("");
+
+      document.getElementById("mode").addEventListener("click", (e) => {
+        const b = e.target.closest("button[data-mode]");
+        if (!b) return;
+        muniMode = b.dataset.mode;
+        for (const x of e.currentTarget.querySelectorAll("button"))
+          x.classList.toggle("on", x === b);
+        runMuni();
+      });
+      prefSel.addEventListener("change", runMuni);
+
+      async function runMuni() {
+        const code = prefSel.value;
+        if (!code) {
+          muniStatus.innerHTML = "";
+          muniOut.className = "empty";
+          muniOut.textContent = "都道府県を選んでください。";
+          muniRaw.textContent = "";
+          return;
+        }
+        const before = fetchCount;
+        const t = performance.now();
+        const res = await geo.listMunicipalities(code, {
+          designatedCity: muniMode,
+        });
+        const ms = performance.now() - t;
+        muniRaw.textContent = JSON.stringify(res, null, 2);
+
+        const list = res.municipalities;
+        const wardCount = list.reduce((n, m) => n + (m.ward?.length ?? 0), 0);
+        muniStatus.innerHTML =
+          `<span class="chip ok">✓ ${list.length}件</span>` +
+          `<span class="detail">政令市の行政区 ${wardCount}件 / ` +
+          `${ms.toFixed(0)}ms / fetch ${fetchCount - before}回</span>`;
+
+        muniOut.className = "";
+        muniOut.innerHTML = `<table>
+          <thead><tr><th class="num">#</th><th>municipality</th><th>ward</th></tr></thead>
+          <tbody>${list
+            .map(
+              (m, i) => `<tr>
+              <td class="num">${i + 1}</td>
+              <td class="muni">${esc(m.municipality)}</td>
+              <td class="wcell"><div class="wards">${(m.ward ?? [])
+                .map((w) => `<span>${esc(w)}</span>`)
+                .join("")}</div></td>
+            </tr>`,
+            )
+            .join("")}</tbody></table>`;
+      }
+
     </script>
   </body>
 </html>
