@@ -132,10 +132,22 @@ await writeFile(`${OUT_DIR}/rail.json`, json);
 const gz = gzipSync(Buffer.from(json), { level: 9 });
 
 const prefs = new Set(stations.map((s) => s[4]));
+/**
+ * 駅が1件も無い路線。無料版では新幹線11路線がこれに該当する（駅が有料版のみ）。
+ * listLines() は駅から路線を引くのでこれらは出てこない。増えていたら入力を疑う。
+ */
+const stationCount = new Map();
+for (const s of stations) stationCount.set(s[3], (stationCount.get(s[3]) ?? 0) + 1);
+const empty = lines.filter((l) => !stationCount.has(l.code));
+
 console.log(`rail.json: ${stations.length} stations / ${lines.length} lines`);
 console.log(`  除外(廃止・移転): ${dropped} 件`);
 console.log(`  路線が引けない駅: ${noLine} 件`);
 console.log(`  都道府県: ${prefs.size} / 47`);
+console.log(`  駅が0件の路線: ${empty.length} 件`);
+if (empty.length) {
+  console.log(`    ${empty.map((l) => l.name).join(" / ")}`);
+}
 console.log(
   `  サイズ: ${(json.length / 1024).toFixed(1)} KB (gzip ${(gz.length / 1024).toFixed(1)} KB)`,
 );
