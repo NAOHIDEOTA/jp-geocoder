@@ -14,6 +14,7 @@ import { toKey, toExactKey } from "./core/normalize.js";
 import { consumePref, resolvePref } from "./core/pref.js";
 import { CityIndex, type CitiesFile, type CityRecord } from "./core/cities.js";
 import { buildMunicipalities } from "./core/municipalities.js";
+import { RailIndex, type RailFile } from "./core/rail.js";
 import { parseTail } from "./core/banchi.js";
 import {
   lookupTown,
@@ -41,6 +42,11 @@ import type {
   GeocodeResult,
   MunicipalitiesResult,
   MunicipalityOptions,
+  LinesResult,
+  NearbyStationsResult,
+  NearestStationsOptions,
+  StationQuery,
+  StationsResult,
 } from "./types.js";
 
 /**
@@ -66,6 +72,12 @@ export const DEFAULT_BASE_URL = "https://jp-geocoder.pages.dev/v1";
 export const CITY_ATTRIBUTION: readonly string[] = [
   "デジタル庁 アドレス・ベース・レジストリ",
 ];
+
+/**
+ * 駅・路線の出典。駅データ.jp は表示義務が無い（利用規約）が、
+ * 出所を隠さない方針なので明示する。
+ */
+export const RAIL_ATTRIBUTION: readonly string[] = ["駅データ.jp"];
 
 /** 号まで降りる候補の数。§1.2 の fetch 回数を守るための上限 */
 const DESCEND_LIMIT = 2;
@@ -305,6 +317,16 @@ export function createGeocoder(options: GeocoderOptions = {}): Geocoder {
       );
     }
     return shardsPromise;
+  };
+
+  let railPromise: Promise<RailIndex> | null = null;
+  const loadRail = (): Promise<RailIndex> => {
+    if (!railPromise) {
+      railPromise = fetcher
+        .get("rail.json")
+        .then((file) => new RailIndex(file as RailFile));
+    }
+    return railPromise;
   };
 
   /**
@@ -553,6 +575,92 @@ export function createGeocoder(options: GeocoderOptions = {}): Geocoder {
           options.designatedCity ?? "wards",
         ),
         attribution,
+      };
+    },
+
+    async listStations(query: StationQuery = {}): Promise<StationsResult> {
+      const attribution = [...RAIL_ATTRIBUTION];
+      // 都道府県が指定されていて解決できないなら、全件を返さず空で返す
+      let prefCode: number | null = null;
+      if (query.pref !== undefined && query.pref !== null) {
+        const resolved = resolvePref(query.pref);
+        if (!resolved) return { stations: [], attribution };
+        prefCode = Number(resolved.code);
+      }
+
+      const rail = await loadRail();
+      let stations = rail.stations as readonly (typeof rail.stations)[number][];
+      if (prefCode !== null) stations = stations.filter((s) => s.pref === prefCode);
+      if (query.line !== undefined)
+        stations = stations.filter((s) => s.lineCode === query.line);
+      return { stations: [...stations], attribution };
+    },
+
+    async getStation(code: number): Promise<StationsResult> {
+      const attribution = [...RAIL_ATTRIBUTION];
+      const rail = await loadRail();
+      const hit = rail.station(code);
+      return { stations: hit ? [hit] : [], attribution };
+    },
+
+    async listLines(pref: string | number): Promise<LinesResult> {
+      const attribution = [...RAIL_ATTRIBUTION];
+      const resolved = resolvePref(pref);
+      if (!resolved) return { lines: [], attribution };
+
+      const rail = await loadRail();
+      const prefCode = Number(resolved.code);
+      // その県に駅がある路線だけを、路線コード順で返す
+      const codes = new Set<number>();
+      for (const s of rail.stations) {
+        if (s.pref === prefCode) codes.add(s.lineCode);
+      }
+      return {
+        lines: rail.lines.filter((l) => codes.has(l.code)),
+        attribution,
+      };
+    },
+
+    async nearestStations(
+      lat: number,
+      lng: number,
+      options: NearestStationsOptions = {},
+    ): Promise<NearbyStationsResult> {
+      const attribution = [...RAIL_ATTRIBUTION];
+      if (!Number.isFinite(lat) || !Number.isFinite(lng))
+        return { stations: [], attribution };
+
+      const rail = await loadRail();
+      const limit = options.limit ?? 10;
+      let hits = rail.nearest(lat, lng, limit, options.groupByStation ?? false);
+      if (options.maxDistance !== undefined)
+        hits = hits.filter((h) => h.distance <= options.maxDistance!);
+      return { stations: hits, attribution };
+    },
+
+    async nearestStationsByAddress(
+      address: string,
+      options: NearestStationsOptions = {},
+    ) {
+      const geocoded = await this.geocode(address);
+      const candidate = geocoded.candidates[0] ?? null;
+      if (!candidate) {
+        return {
+          stations: [],
+          candidate: null,
+          // 住所が解けなくても、何を使おうとしたかは示す
+          attribution: [...geocoded.attribution, ...RAIL_ATTRIBUTION],
+        };
+      }
+      const near = await this.nearestStations(
+        candidate.lat,
+        candidate.lng,
+        options,
+      );
+      return {
+        stations: near.stations,
+        candidate,
+        attribution: [...geocoded.attribution, ...RAIL_ATTRIBUTION],
       };
     },
   };

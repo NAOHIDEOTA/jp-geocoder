@@ -150,7 +150,9 @@
         font-size: 0.8rem;
         padding: 0.2rem 0.6rem;
       }
-      #map {
+      #map,
+      #rmap,
+      #lmap {
         height: 420px;
         border: 1px solid var(--line);
         border-radius: 10px;
@@ -440,6 +442,12 @@
           <span>フォームの選択肢に使える市区町村の一覧を返します。</span>
         </li>
         <li>
+          <b>住所 → 最寄り駅</b>
+          <span
+            >全国1万駅。座標を経由して、住所からそのまま最寄り駅を出せます。</span
+          >
+        </li>
+        <li>
           <b>どこまで解けたかを必ず返す</b>
           <span
             >「たぶん合ってる座標」を黙って返しません。粒度と品質を明示します。</span
@@ -450,32 +458,33 @@
       <nav class="tabs" id="tabs">
         <button type="button" data-tab="geo" class="on">住所 → 緯度経度</button>
         <button type="button" data-tab="muni">都道府県 → 市区町村</button>
+        <button type="button" data-tab="rail">住所 → 最寄り駅</button>
+        <button type="button" data-tab="line">都道府県 → 路線 → 駅</button>
       </nav>
 
       <section id="tab-geo">
+        <form id="f">
+          <input
+            id="q"
+            type="search"
+            placeholder="東京都世田谷区太子堂5-5-5"
+            autocomplete="off"
+          />
+          <button type="submit">検索</button>
+        </form>
 
-      <form id="f">
-        <input
-          id="q"
-          type="search"
-          placeholder="東京都世田谷区太子堂5-5-5"
-          autocomplete="off"
-        />
-        <button type="submit">検索</button>
-      </form>
+        <!-- OK / NG がひと目で分かるステータス行 -->
+        <div class="status" id="status"></div>
 
-      <!-- OK / NG がひと目で分かるステータス行 -->
-      <div class="status" id="status"></div>
+        <div class="samples" id="samples"></div>
 
-      <div class="samples" id="samples"></div>
+        <div id="map"></div>
 
-      <div id="map"></div>
+        <div class="wrap">
+          <div id="out" class="empty">住所を入力してください。</div>
+        </div>
 
-      <div class="wrap">
-        <div id="out" class="empty">住所を入力してください。</div>
-      </div>
-
-      <!-- geocode() が返した JSON をそのまま見せる（API利用者向け） -->
+        <!-- geocode() が返した JSON をそのまま見せる（API利用者向け） -->
         <details class="raw" id="rawbox" open>
           <summary>レスポンス JSON</summary>
           <pre id="raw"></pre>
@@ -493,11 +502,17 @@
             ><span class="badge lv-parcel">parcel</span>筆（地番）</span
           >
           <span class="row"><span class="badge lv-oaza">oaza</span>町字</span>
-          <span class="row"><span class="badge lv-city">city</span>市区町村</span>
-          <span class="row"><span class="badge lv-pref">pref</span>都道府県</span>
+          <span class="row"
+            ><span class="badge lv-city">city</span>市区町村</span
+          >
+          <span class="row"
+            ><span class="badge lv-pref">pref</span>都道府県</span
+          >
           <span class="t">accuracy — その座標の品質</span>
           <span class="row"><code>surveyed</code> 測量済み。実測点</span>
-          <span class="row"><code>legacy</code> 公図由来。数十m〜百mずれうる</span>
+          <span class="row"
+            ><code>legacy</code> 公図由来。数十m〜百mずれうる</span
+          >
           <span class="row"
             ><code>representative</code> 代表点。探した対象の点ではない</span
           >
@@ -513,9 +528,13 @@
           </div>
         </div>
         <p class="hint">
-          <code>designatedCity</code> は<strong>政令指定都市20市の見せ方だけ</strong>を
-          切り替えます。<code>wards</code> は行政区ごとに1件（横浜市なら18件並ぶ）、
-          <code>nested</code> は市1件に区をまとめます。 特別区・郡部の町村・通常の市は
+          <code>designatedCity</code>
+          は<strong>政令指定都市20市の見せ方だけ</strong>を 切り替えます。<code
+            >wards</code
+          >
+          は行政区ごとに1件（横浜市なら18件並ぶ）、
+          <code>nested</code> は市1件に区をまとめます。
+          特別区・郡部の町村・通常の市は
           どちらでも同じ形です。郡名は含めません（「三浦郡葉山町」ではなく「葉山町」）。
         </p>
 
@@ -531,10 +550,69 @@
         </details>
       </section>
 
+      <section id="tab-rail" hidden>
+        <form id="rf">
+          <input
+            id="rq"
+            type="search"
+            placeholder="東京都世田谷区太子堂5-5-5"
+            autocomplete="off"
+          />
+          <button type="submit">検索</button>
+        </form>
+
+        <div class="samples" id="rsamples"></div>
+
+        <div class="controls">
+          <label class="hint" style="margin: 0">
+            <input type="checkbox" id="rgroup" checked style="width: auto" />
+            乗換駅をまとめる（groupByStation）
+          </label>
+        </div>
+
+        <div class="status" id="rail-status"></div>
+        <div id="rmap"></div>
+
+        <div class="wrap">
+          <div id="rail-out" class="empty">住所を入力してください。</div>
+        </div>
+
+        <details class="raw" open>
+          <summary>レスポンス JSON</summary>
+          <pre id="rail-raw"></pre>
+        </details>
+      </section>
+
+      <section id="tab-line" hidden>
+        <div class="controls">
+          <select id="lpref"></select>
+          <select id="lline"><option value="">先に都道府県を選択</option></select>
+        </div>
+        <p class="hint">
+          路線の一覧はその都道府県に駅がある路線だけを返します。駅は
+          <strong>路線上の並び順</strong>で出ます（駅コード順ではありません。
+          後からできた駅が末尾に付いてしまうため）。分岐のある路線
+          （鶴見線の海芝浦支線など）は1本の列に並べられないので、その箇所だけ順序が飛びます。
+        </p>
+
+        <div class="status" id="line-status"></div>
+        <div id="lmap"></div>
+
+        <div class="wrap">
+          <div id="line-out" class="empty">都道府県を選んでください。</div>
+        </div>
+
+        <details class="raw" open>
+          <summary>レスポンス JSON</summary>
+          <pre id="line-raw"></pre>
+        </details>
+      </section>
+
       <footer>
         このページはビルド済みの <code>lib/</code> をそのまま読み込み、データは
-        CDN 上の静的 JSON から取っています。検索のたびに何ファイル取りに行ったかは
-        結果行の <code>fetch</code> に出ます（一度読んだものは再取得しません）。
+        CDN 上の静的 JSON
+        から取っています。検索のたびに何ファイル取りに行ったかは 結果行の
+        <code>fetch</code> に出ます（一度読んだものは再取得しません）。
         <br />
         出典: デジタル庁 アドレス・ベース・レジストリ / 国土交通省 位置参照情報
         —
@@ -557,7 +635,13 @@
        * データは Cloudflare Pages から取る。
        */
       const LIB = "./lib/index.js";
-      const BASE = "https://jp-geocoder.pages.dev/v1";
+      /**
+       * 既定は本番の配信元。?base=... で差し替えられるようにしてある
+       * （未配信のファイルをローカルで確認するとき用）。
+       */
+      const BASE =
+        new URLSearchParams(location.search).get("base") ??
+        "https://jp-geocoder.pages.dev/v1";
 
       const { createGeocoder, PREFECTURES } = await import(LIB);
 
@@ -658,6 +742,25 @@
           /[&<>"]/g,
           (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c],
         );
+
+      /**
+       * 配信物が取れなかったときの表示。
+       * 未配信のファイルがあると画面が沈黙してしまい原因が追えないので、
+       * どのファイルで失敗したかまで出す。
+       */
+      function fail(statusEl, outEl, rawEl, file, error) {
+        const msg = String(error?.message ?? error);
+        const notFound = /-> 40\d|404/.test(msg);
+        statusEl.innerHTML =
+          `<span class="chip err">✕ ${esc(file)} を読めません</span>` +
+          `<span class="detail">${esc(msg)}</span>`;
+        outEl.className = "empty";
+        outEl.textContent = notFound
+          ? `${file} がまだ配信されていません。make pages-deploy で配信するか、` +
+            `?base=/v1 のようにローカルの配信物を指定してください。`
+          : `${file} の取得に失敗しました。`;
+        rawEl.textContent = msg;
+      }
 
       /** 入力欄とステータス行に OK / NG を反映する */
       function setState(kind, text, detail = "") {
@@ -794,10 +897,18 @@
         if (!b) return;
         for (const x of tabs.querySelectorAll("button"))
           x.classList.toggle("on", x === b);
-        document.getElementById("tab-geo").hidden = b.dataset.tab !== "geo";
-        document.getElementById("tab-muni").hidden = b.dataset.tab !== "muni";
+        for (const t of ["geo", "muni", "rail", "line"])
+          document.getElementById(`tab-${t}`).hidden = b.dataset.tab !== t;
         // 隠れている間にサイズが変わっているので地図を測り直す
         if (b.dataset.tab === "geo") map.invalidateSize();
+        if (b.dataset.tab === "rail") rmap.invalidateSize();
+        if (b.dataset.tab === "line") {
+          lmap.invalidateSize();
+          if (!lpref.value) {
+            lpref.value = "13";
+            runLines();
+          }
+        }
         if (b.dataset.tab === "muni" && !prefSel.value) {
           prefSel.value = "14";
           runMuni();
@@ -838,9 +949,16 @@
         }
         const before = fetchCount;
         const t = performance.now();
-        const res = await geo.listMunicipalities(code, {
-          designatedCity: muniMode,
-        });
+        let res;
+        try {
+          res = await geo.listMunicipalities(code, {
+            designatedCity: muniMode,
+          });
+        } catch (e) {
+          // 配信物が取れないと黙って何も起きないので、必ず理由を出す
+          fail(muniStatus, muniOut, muniRaw, "cities.json", e);
+          return;
+        }
         const ms = performance.now() - t;
         muniRaw.textContent = JSON.stringify(res, null, 2);
 
@@ -862,6 +980,240 @@
               <td class="wcell"><div class="wards">${(m.ward ?? [])
                 .map((w) => `<span>${esc(w)}</span>`)
                 .join("")}</div></td>
+            </tr>`,
+            )
+            .join("")}</tbody></table>`;
+      }
+
+      // ------------------------------------------------ 住所 → 最寄り駅
+      const rmap = L.map("rmap").setView([35.6812, 139.7671], 13);
+      L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
+        attribution: "&copy; OpenStreetMap contributors",
+        maxZoom: 19,
+      }).addTo(rmap);
+      let rlayer = L.layerGroup().addTo(rmap);
+
+      const rq = document.getElementById("rq");
+      const railStatus = document.getElementById("rail-status");
+      const railOut = document.getElementById("rail-out");
+      const railRaw = document.getElementById("rail-raw");
+      const rgroup = document.getElementById("rgroup");
+
+      const RSAMPLES = [
+        "東京都世田谷区太子堂5-5-5",
+        "大阪府大阪市北区梅田3-1-3",
+        "北海道札幌市中央区北5条西2-5",
+        "福岡県福岡市中央区天神1-8-1",
+        "沖縄県那覇市おもろまち1-1-1",
+        "岩手県花巻市石鳥谷町好地第3地割20",
+      ];
+      const rbox = document.getElementById("rsamples");
+      for (const t of RSAMPLES) {
+        const b = document.createElement("button");
+        b.type = "button";
+        b.textContent = t;
+        b.addEventListener("click", () => {
+          rq.value = t;
+          runRail(t);
+        });
+        rbox.append(b);
+      }
+      rgroup.addEventListener("change", () => rq.value && runRail(rq.value));
+
+      let rseq = 0;
+      async function runRail(text) {
+        const input = text.trim();
+        if (!input) return;
+        const my = ++rseq;
+        const before = fetchCount;
+        const t = performance.now();
+        let res;
+        try {
+          res = await geo.nearestStationsByAddress(input, {
+            limit: 8,
+            groupByStation: rgroup.checked,
+          });
+        } catch (e) {
+          if (my !== rseq) return;
+          rlayer.clearLayers();
+          fail(railStatus, railOut, railRaw, "rail.json", e);
+          return;
+        }
+        if (my !== rseq) return;
+        const ms = performance.now() - t;
+        railRaw.textContent = JSON.stringify(res, null, 2);
+        rlayer.clearLayers();
+
+        if (!res.candidate) {
+          railStatus.innerHTML =
+            '<span class="chip err">✕ 住所を解決できません</span>';
+          railOut.className = "empty";
+          railOut.textContent = "候補なし。";
+          return;
+        }
+        const { candidate: c, stations } = res;
+        railStatus.innerHTML =
+          `<span class="chip ok">✓ ${esc(c.address)}</span>` +
+          `<span class="detail">${c.matchLevel}/${c.accuracy} / 駅${stations.length}件 / ` +
+          `${ms.toFixed(0)}ms / fetch ${fetchCount - before}回</span>`;
+
+        // 起点（住所）と駅を地図に置く
+        L.circleMarker([c.lat, c.lng], {
+          radius: 8,
+          color: "#dc2626",
+          fillOpacity: 0.9,
+        })
+          .bindPopup(`<b>${esc(c.address)}</b>`)
+          .addTo(rlayer);
+        const pts = [[c.lat, c.lng]];
+        for (const { station: s, distance } of stations) {
+          pts.push([s.lat, s.lng]);
+          L.marker([s.lat, s.lng])
+            .bindPopup(
+              `<b>${esc(s.name)}</b><br>${esc(s.lineName)}<br>${Math.round(distance)}m`,
+            )
+            .addTo(rlayer);
+          L.polyline(
+            [
+              [c.lat, c.lng],
+              [s.lat, s.lng],
+            ],
+            { color: "#7aa2ff", weight: 1, opacity: 0.6 },
+          ).addTo(rlayer);
+        }
+        rmap.fitBounds(L.latLngBounds(pts).pad(0.2));
+
+        railOut.className = "";
+        railOut.innerHTML = `<table>
+          <thead><tr><th class="num">距離</th><th>駅</th><th>路線</th><th>事業者</th><th>住所</th></tr></thead>
+          <tbody>${stations
+            .map(
+              ({ station: s, distance }) => `<tr>
+              <td class="num">${Math.round(distance).toLocaleString()}m</td>
+              <td class="muni">${esc(s.name)}</td>
+              <td>${esc(s.lineName)}</td>
+              <td>${esc(s.company)}</td>
+              <td class="addr">${esc(s.address)}</td>
+            </tr>`,
+            )
+            .join("")}</tbody></table>`;
+      }
+
+      document.getElementById("rf").addEventListener("submit", (e) => {
+        e.preventDefault();
+        runRail(rq.value);
+      });
+
+      // ------------------------------------------ 都道府県 → 路線 → 駅
+      const lmap = L.map("lmap").setView([35.68, 139.76], 10);
+      L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
+        attribution: "&copy; OpenStreetMap contributors",
+        maxZoom: 19,
+      }).addTo(lmap);
+      let llayer = L.layerGroup().addTo(lmap);
+
+      const lpref = document.getElementById("lpref");
+      const lline = document.getElementById("lline");
+      const lineStatus = document.getElementById("line-status");
+      const lineOut = document.getElementById("line-out");
+      const lineRaw = document.getElementById("line-raw");
+
+      lpref.innerHTML =
+        '<option value="">都道府県を選択</option>' +
+        PREFECTURES.map(
+          ([code, name]) => `<option value="${code}">${name}</option>`,
+        ).join("");
+
+      lpref.addEventListener("change", runLines);
+      lline.addEventListener("change", runLineStations);
+
+      /** 都道府県 → 路線一覧をセレクトに詰める */
+      async function runLines() {
+        const code = lpref.value;
+        llayer.clearLayers();
+        if (!code) {
+          lline.innerHTML = '<option value="">先に都道府県を選択</option>';
+          lineOut.className = "empty";
+          lineOut.textContent = "都道府県を選んでください。";
+          return;
+        }
+        const before = fetchCount;
+        let res;
+        try {
+          res = await geo.listLines(code);
+        } catch (e) {
+          fail(lineStatus, lineOut, lineRaw, "rail.json", e);
+          return;
+        }
+        lline.innerHTML =
+          `<option value="">路線を選択（${res.lines.length}件）</option>` +
+          res.lines
+            .map(
+              (l) =>
+                `<option value="${l.code}">${esc(l.name)}（${esc(l.company)}）</option>`,
+            )
+            .join("");
+        lineStatus.innerHTML =
+          `<span class="chip ok">✓ ${res.lines.length}路線</span>` +
+          `<span class="detail">fetch ${fetchCount - before}回</span>`;
+        lineOut.className = "empty";
+        lineOut.textContent = "路線を選んでください。";
+        lineRaw.textContent = JSON.stringify(res, null, 2);
+      }
+
+      /** 路線 → その都道府県内の駅を路線順で出す */
+      async function runLineStations() {
+        const line = Number(lline.value);
+        llayer.clearLayers();
+        if (!line) return;
+        const before = fetchCount;
+        let res;
+        try {
+          res = await geo.listStations({ pref: lpref.value, line });
+        } catch (e) {
+          fail(lineStatus, lineOut, lineRaw, "rail.json", e);
+          return;
+        }
+        const list = res.stations;
+        lineRaw.textContent = JSON.stringify(res, null, 2);
+        lineStatus.innerHTML =
+          `<span class="chip ok">✓ ${list.length}駅</span>` +
+          `<span class="detail">${esc(list[0]?.lineName ?? "")} / ` +
+          `${lpref.options[lpref.selectedIndex].text}内 / fetch ${fetchCount - before}回</span>`;
+
+        if (!list.length) {
+          lineOut.className = "empty";
+          lineOut.textContent = "この都道府県にこの路線の駅はありません。";
+          return;
+        }
+
+        // 路線順に線でつなぐ。並びが正しいか目で見て分かるようにする
+        const pts = list.map((s) => [s.lat, s.lng]);
+        L.polyline(pts, { color: "#1d4ed8", weight: 3, opacity: 0.7 }).addTo(
+          llayer,
+        );
+        list.forEach((s, i) => {
+          L.circleMarker([s.lat, s.lng], {
+            radius: 5,
+            color: "#1d4ed8",
+            fillColor: "#fff",
+            fillOpacity: 1,
+          })
+            .bindPopup(`<b>${i + 1}. ${esc(s.name)}</b><br>${esc(s.address)}`)
+            .addTo(llayer);
+        });
+        lmap.fitBounds(L.latLngBounds(pts).pad(0.1));
+
+        lineOut.className = "";
+        lineOut.innerHTML = `<table>
+          <thead><tr><th class="num">#</th><th>駅</th><th>郵便番号</th><th>住所</th></tr></thead>
+          <tbody>${list
+            .map(
+              (s, i) => `<tr>
+              <td class="num">${i + 1}</td>
+              <td class="muni">${esc(s.name)}</td>
+              <td><code>${esc(s.postalCode.replace(/^(\d{3})(\d{4})$/, "$1-$2"))}</code></td>
+              <td class="addr">${esc(s.address)}</td>
             </tr>`,
             )
             .join("")}</tbody></table>`;

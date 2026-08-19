@@ -9,5 +9,7 @@
 .DS_Store
 .pnpm-store
 DOC.md
+# デモをローカルで確認するとき用の配信物のコピー（?base=/v1 で参照する）
+/docs/v1
 /docs/lib/**/*.d.ts
 /docs/lib/**/*.map

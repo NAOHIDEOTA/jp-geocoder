@@ -102,6 +102,73 @@ export interface MunicipalitiesResult {
   attribution: string[];
 }
 
+/** 駅。1駅1路線で1件（乗換駅は路線の数だけ現れ、groupCode が同じになる） */
+export interface Station {
+  /** 駅コード（駅データ.jp の station_cd） */
+  code: number;
+  /** 同一駅グループ。乗換で結ばれる駅どうしで同じ値になる */
+  groupCode: number;
+  name: string;
+  lineCode: number;
+  lineName: string;
+  /** 事業者名 */
+  company: string;
+  /** 都道府県コード 1〜47 */
+  pref: number;
+  /** 郵便番号（ハイフンなし7桁） */
+  postalCode: string;
+  address: string;
+  lat: number;
+  lng: number;
+}
+
+export interface Line {
+  code: number;
+  name: string;
+  company: string;
+}
+
+/** 最寄り駅の1件 */
+export interface NearbyStation {
+  station: Station;
+  /** 指定座標からの直線距離[m] */
+  distance: number;
+}
+
+export interface StationQuery {
+  /** 都道府県コード（1〜47 / "01"）または名称（"神奈川県" / "神奈川"） */
+  pref?: string | number;
+  /** 路線コード */
+  line?: number;
+}
+
+export interface NearestStationsOptions {
+  /** 返す件数。既定 10 */
+  limit?: number;
+  /**
+   * 同一駅（乗換）を1件にまとめるか。既定 false。
+   * false だと「東京駅」が乗り入れ路線の数だけ並ぶ
+   */
+  groupByStation?: boolean;
+  /** この距離[m]より遠い駅は返さない */
+  maxDistance?: number;
+}
+
+export interface StationsResult {
+  stations: Station[];
+  attribution: string[];
+}
+
+export interface NearbyStationsResult {
+  stations: NearbyStation[];
+  attribution: string[];
+}
+
+export interface LinesResult {
+  lines: Line[];
+  attribution: string[];
+}
+
 export interface GeocoderOptions {
   /** 配信元。省略すると DEFAULT_BASE_URL（自前で配信する場合だけ指定する） */
   baseUrl?: string;
@@ -120,4 +187,29 @@ export interface Geocoder {
     pref: string | number,
     options?: MunicipalityOptions,
   ): Promise<MunicipalitiesResult>;
+
+  /** 都道府県・路線で駅を絞り込む。条件なしなら全国の全駅 */
+  listStations(query?: StationQuery): Promise<StationsResult>;
+
+  /** 駅コードで1件引く。無ければ stations は空 */
+  getStation(code: number): Promise<StationsResult>;
+
+  /** 都道府県に乗り入れている路線の一覧 */
+  listLines(pref: string | number): Promise<LinesResult>;
+
+  /** 座標に近い順に駅を返す */
+  nearestStations(
+    lat: number,
+    lng: number,
+    options?: NearestStationsOptions,
+  ): Promise<NearbyStationsResult>;
+
+  /**
+   * 住所文字列から最寄り駅を返す。geocode() と nearestStations() の合成。
+   * 住所を解決できなければ stations は空。
+   */
+  nearestStationsByAddress(
+    address: string,
+    options?: NearestStationsOptions,
+  ): Promise<NearbyStationsResult & { candidate: Candidate | null }>;
 }
