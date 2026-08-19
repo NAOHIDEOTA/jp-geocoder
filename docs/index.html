@@ -57,6 +57,10 @@
       * {
         box-sizing: border-box;
       }
+      /* クラス側の display が hidden 属性に勝ってしまうので明示的に潰す */
+      [hidden] {
+        display: none !important;
+      }
       html,
       body {
         margin: 0;
@@ -1981,15 +1985,6 @@
           // 隠れている間にサイズが変わるので測り直す
           maps[target]?.invalidateSize();
           syncReq(target);
-          if (target === "pref" && !$("pout").dataset.done) runPref();
-          if (target === "muni" && !$("mpref").value) {
-            $("mpref").value = "14";
-            runMuni();
-          }
-          if (target === "line" && !$("lpref").value) {
-            $("lpref").value = "13";
-            runLines();
-          }
         });
       });
 
