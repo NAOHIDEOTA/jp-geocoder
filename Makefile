@@ -27,9 +27,6 @@ test:
 typecheck:
 	docker exec jp-geocoder pnpm run typecheck
 
-# デモ（docs/）をローカルで開く。本番（GitHub Pages が /docs をそのまま配信）と同じ構成。
-# docs/lib はコンパイル結果のコピーで、コミットする（GitHub Pages が配信するため）。
-# src/ を変えたらこれを実行して docs/lib を更新すること
 demo: build
 	docker exec jp-geocoder sh -c "rm -rf docs/lib && cp -r dist docs/lib"
 	docker exec -d jp-geocoder pnpm dlx http-server /workspace/docs -p 8080 --cors
@@ -37,7 +34,6 @@ demo: build
 
 
 # ---- ビルド入力データの取得（DOC.md §2 / §13） -----------------------------
-# 元データを全部取得する。
 data-all: data-part-catalog data-part-abr data-part-isj data-part-codh
 	@echo "取得完了。次は make build-data"
 
@@ -51,9 +47,7 @@ data-part-abr:
 	docker exec jp-geocoder sh -c "cd data && python3 download.py town"
 	docker exec jp-geocoder sh -c "cd data && python3 download.py parcel"
 
-# 駅データ.jp。**自動取得できない**（ダウンロードに会員登録＋ログインが要る）。
-# https://ekidata.jp/dl/ から station / line / company の CSV を落として
-# data/ekidata/ に置く。ここでは置かれているかだけを確認する。
+# 駅データ.jp
 data-part-ekidata:
 	@for p in station line company; do \
 	  ls data/ekidata/$$p*.csv >/dev/null 2>&1 || { \
@@ -81,8 +75,7 @@ measure-source:
 build-data: build-part-version build-part-cities build-part-towns build-part-rsdt \
             build-part-parcel build-part-alias build-part-rail validate
 
-# 元データの版（version.json）。dist-data は git に入れないので、
-# 「配信中のものがどの版で作られたか」の唯一の記録になる
+# 元データの版（version.json）
 build-part-version:
 	docker exec jp-geocoder node scripts/build/build-version.mjs
 

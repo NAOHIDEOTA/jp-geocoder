@@ -154,6 +154,15 @@ test("nearestStations: 不正な座標は空", async () => {
   assert.deepEqual((await g.nearestStations(35, Infinity)).stations, []);
 });
 
+test("listStations は配信物の並び（路線順）を保つ", async () => {
+  // rail.json は e_sort 順で焼いてある。フィルタで並べ替えないことの確認
+  const { stations } = await geocoder().listStations({ line: 11302 });
+  assert.deepEqual(
+    stations.map((s) => s.name),
+    ["東京", "有楽町"],
+  );
+});
+
 test("rail.json は1回しか取りに行かない", async () => {
   let calls = 0;
   const g = createGeocoder({

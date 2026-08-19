@@ -165,7 +165,7 @@ const { candidate, stations } = await geocoder.nearestStationsByAddress(
 | --------------------------------------------- | -------------------- | ------------------------------------ |
 | `nearestStations(lat, lng, options?)`          | `NearbyStationsResult` | 座標に近い順                        |
 | `nearestStationsByAddress(address, options?)`  | 上記 + `candidate`   | 住所から最寄り駅                     |
-| `listStations(query?)`                         | `StationsResult`     | 都道府県・路線で絞り込み             |
+| `listStations(query?)`                         | `StationsResult`     | 都道府県・路線で絞り込み（路線順）   |
 | `getStation(code)`                             | `StationsResult`     | 駅コードで1件                        |
 | `listLines(pref)`                              | `LinesResult`        | その都道府県に乗り入れる路線         |
 
@@ -176,6 +176,18 @@ const { candidate, stations } = await geocoder.nearestStationsByAddress(
 | `limit`           | `10`    | 返す件数                                                  |
 | `groupByStation`  | `false` | 乗換駅を1件にまとめる。false だと「東京」が路線の数だけ並ぶ |
 | `maxDistance`     | —       | この距離[m]より遠い駅を返さない                           |
+
+「都道府県 → 路線 → 駅」の絞り込みはこの2つを繋ぐだけです。
+
+```ts
+const { lines } = await geocoder.listLines("東京都"); // 81路線
+const { stations } = await geocoder.listStations({ pref: "東京都", line: 11302 });
+// 大崎 → 五反田 → … → 田町 → 高輪ゲートウェイ → 品川
+```
+
+駅は**路線上の並び順**で返します（駅コード順ではありません。駅コードは登録順なので、
+後からできた駅が末尾に付いてしまいます）。分岐を持つ路線（鶴見線の海芝浦支線、
+丸ノ内線の方南町支線など25路線）は1本の列に並べられないため、分岐箇所だけ順序が飛びます。
 
 距離は Haversine（球面近似）による直線距離[m]です。徒歩の経路距離ではありません。
 

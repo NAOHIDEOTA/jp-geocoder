@@ -151,7 +151,8 @@
         padding: 0.2rem 0.6rem;
       }
       #map,
-      #rmap {
+      #rmap,
+      #lmap {
         height: 420px;
         border: 1px solid var(--line);
         border-radius: 10px;
@@ -458,6 +459,7 @@
         <button type="button" data-tab="geo" class="on">住所 → 緯度経度</button>
         <button type="button" data-tab="muni">都道府県 → 市区町村</button>
         <button type="button" data-tab="rail">住所 → 最寄り駅</button>
+        <button type="button" data-tab="line">都道府県 → 路線 → 駅</button>
       </nav>
 
       <section id="tab-geo">
@@ -578,6 +580,31 @@
         <details class="raw" open>
           <summary>レスポンス JSON</summary>
           <pre id="rail-raw"></pre>
+        </details>
+      </section>
+
+      <section id="tab-line" hidden>
+        <div class="controls">
+          <select id="lpref"></select>
+          <select id="lline"><option value="">先に都道府県を選択</option></select>
+        </div>
+        <p class="hint">
+          路線の一覧はその都道府県に駅がある路線だけを返します。駅は
+          <strong>路線上の並び順</strong>で出ます（駅コード順ではありません。
+          後からできた駅が末尾に付いてしまうため）。分岐のある路線
+          （鶴見線の海芝浦支線など）は1本の列に並べられないので、その箇所だけ順序が飛びます。
+        </p>
+
+        <div class="status" id="line-status"></div>
+        <div id="lmap"></div>
+
+        <div class="wrap">
+          <div id="line-out" class="empty">都道府県を選んでください。</div>
+        </div>
+
+        <details class="raw" open>
+          <summary>レスポンス JSON</summary>
+          <pre id="line-raw"></pre>
         </details>
       </section>
 
@@ -870,11 +897,18 @@
         if (!b) return;
         for (const x of tabs.querySelectorAll("button"))
           x.classList.toggle("on", x === b);
-        for (const t of ["geo", "muni", "rail"])
+        for (const t of ["geo", "muni", "rail", "line"])
           document.getElementById(`tab-${t}`).hidden = b.dataset.tab !== t;
         // 隠れている間にサイズが変わっているので地図を測り直す
         if (b.dataset.tab === "geo") map.invalidateSize();
         if (b.dataset.tab === "rail") rmap.invalidateSize();
+        if (b.dataset.tab === "line") {
+          lmap.invalidateSize();
+          if (!lpref.value) {
+            lpref.value = "13";
+            runLines();
+          }
+        }
         if (b.dataset.tab === "muni" && !prefSel.value) {
           prefSel.value = "14";
           runMuni();
@@ -1069,6 +1103,122 @@
         e.preventDefault();
         runRail(rq.value);
       });
+
+      // ------------------------------------------ 都道府県 → 路線 → 駅
+      const lmap = L.map("lmap").setView([35.68, 139.76], 10);
+      L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
+        attribution: "&copy; OpenStreetMap contributors",
+        maxZoom: 19,
+      }).addTo(lmap);
+      let llayer = L.layerGroup().addTo(lmap);
+
+      const lpref = document.getElementById("lpref");
+      const lline = document.getElementById("lline");
+      const lineStatus = document.getElementById("line-status");
+      const lineOut = document.getElementById("line-out");
+      const lineRaw = document.getElementById("line-raw");
+
+      lpref.innerHTML =
+        '<option value="">都道府県を選択</option>' +
+        PREFECTURES.map(
+          ([code, name]) => `<option value="${code}">${name}</option>`,
+        ).join("");
+
+      lpref.addEventListener("change", runLines);
+      lline.addEventListener("change", runLineStations);
+
+      /** 都道府県 → 路線一覧をセレクトに詰める */
+      async function runLines() {
+        const code = lpref.value;
+        llayer.clearLayers();
+        if (!code) {
+          lline.innerHTML = '<option value="">先に都道府県を選択</option>';
+          lineOut.className = "empty";
+          lineOut.textContent = "都道府県を選んでください。";
+          return;
+        }
+        const before = fetchCount;
+        let res;
+        try {
+          res = await geo.listLines(code);
+        } catch (e) {
+          fail(lineStatus, lineOut, lineRaw, "rail.json", e);
+          return;
+        }
+        lline.innerHTML =
+          `<option value="">路線を選択（${res.lines.length}件）</option>` +
+          res.lines
+            .map(
+              (l) =>
+                `<option value="${l.code}">${esc(l.name)}（${esc(l.company)}）</option>`,
+            )
+            .join("");
+        lineStatus.innerHTML =
+          `<span class="chip ok">✓ ${res.lines.length}路線</span>` +
+          `<span class="detail">fetch ${fetchCount - before}回</span>`;
+        lineOut.className = "empty";
+        lineOut.textContent = "路線を選んでください。";
+        lineRaw.textContent = JSON.stringify(res, null, 2);
+      }
+
+      /** 路線 → その都道府県内の駅を路線順で出す */
+      async function runLineStations() {
+        const line = Number(lline.value);
+        llayer.clearLayers();
+        if (!line) return;
+        const before = fetchCount;
+        let res;
+        try {
+          res = await geo.listStations({ pref: lpref.value, line });
+        } catch (e) {
+          fail(lineStatus, lineOut, lineRaw, "rail.json", e);
+          return;
+        }
+        const list = res.stations;
+        lineRaw.textContent = JSON.stringify(res, null, 2);
+        lineStatus.innerHTML =
+          `<span class="chip ok">✓ ${list.length}駅</span>` +
+          `<span class="detail">${esc(list[0]?.lineName ?? "")} / ` +
+          `${lpref.options[lpref.selectedIndex].text}内 / fetch ${fetchCount - before}回</span>`;
+
+        if (!list.length) {
+          lineOut.className = "empty";
+          lineOut.textContent = "この都道府県にこの路線の駅はありません。";
+          return;
+        }
+
+        // 路線順に線でつなぐ。並びが正しいか目で見て分かるようにする
+        const pts = list.map((s) => [s.lat, s.lng]);
+        L.polyline(pts, { color: "#1d4ed8", weight: 3, opacity: 0.7 }).addTo(
+          llayer,
+        );
+        list.forEach((s, i) => {
+          L.circleMarker([s.lat, s.lng], {
+            radius: 5,
+            color: "#1d4ed8",
+            fillColor: "#fff",
+            fillOpacity: 1,
+          })
+            .bindPopup(`<b>${i + 1}. ${esc(s.name)}</b><br>${esc(s.address)}`)
+            .addTo(llayer);
+        });
+        lmap.fitBounds(L.latLngBounds(pts).pad(0.1));
+
+        lineOut.className = "";
+        lineOut.innerHTML = `<table>
+          <thead><tr><th class="num">#</th><th>駅</th><th>郵便番号</th><th>住所</th></tr></thead>
+          <tbody>${list
+            .map(
+              (s, i) => `<tr>
+              <td class="num">${i + 1}</td>
+              <td class="muni">${esc(s.name)}</td>
+              <td><code>${esc(s.postalCode.replace(/^(\d{3})(\d{4})$/, "$1-$2"))}</code></td>
+              <td class="addr">${esc(s.address)}</td>
+            </tr>`,
+            )
+            .join("")}</tbody></table>`;
+      }
+
     </script>
   </body>
 </html>

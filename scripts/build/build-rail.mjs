@@ -77,6 +77,8 @@ for await (const r of readCsv(await pick("line"))) {
  *   8 lng        経度
  */
 const stations = [];
+/** 並べ替え用。配信物には出さない（駅コードから復元できないので一時的に持つ） */
+const sortKey = new Map();
 let dropped = 0;
 let noLine = 0;
 for await (const r of readCsv(await pick("station"))) {
@@ -91,6 +93,7 @@ for await (const r of readCsv(await pick("station"))) {
   if (lat < 20 || lat > 46 || lng < 122 || lng > 154) continue;
   if (!lineIndex.has(Number(r.line_cd))) noLine++;
 
+  sortKey.set(Number(r.station_cd), Number(r.e_sort));
   stations.push([
     Number(r.station_cd),
     Number(r.station_g_cd),
@@ -104,7 +107,21 @@ for await (const r of readCsv(await pick("station"))) {
   ]);
 }
 
-stations.sort((a, b) => a[0] - b[0]);
+/**
+ * 駅コード順ではなく e_sort 順に並べる。
+ *
+ * 駅コードは登録順なので、後からできた駅が末尾に付く
+ * （山手線だと高輪ゲートウェイが品川の後ろに来てしまう）。
+ * e_sort は路線上の並びを表しており、隣接情報(join)と突き合わせると
+ * 不一致は 312箇所 → 27箇所まで減る。残る27箇所は鶴見線の海芝浦支線や
+ * 丸ノ内線の方南町支線のように分岐を持つ路線で、そもそも1本の列に
+ * 並べられないものなので、これ以上は詰められない。
+ *
+ * e_sort は144件重複するので、駅コードで安定させる。
+ */
+stations.sort(
+  (a, b) => (sortKey.get(a[0]) ?? 0) - (sortKey.get(b[0]) ?? 0) || a[0] - b[0],
+);
 lines.sort((a, b) => a.code - b.code);
 
 const payload = {
