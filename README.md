@@ -116,6 +116,22 @@ const result = await geocoder.geocode("東京都世田谷区太子堂5-5-5");
 | `building`   | `string?` | 切り離した建物名・部屋番号                          |
 | `machiazaId` | `string?` | ABR の町字ID。住所文字列より安定した不変キー        |
 
+### `geocoder.listPrefectures()`
+
+都道府県47件を代表点の座標つきで返します。
+
+```ts
+const { prefectures } = await geocoder.listPrefectures();
+// [{ code: "01", name: "北海道", lat: 43.063941, lng: 141.347907 }, …]
+```
+
+名称だけで足りる場合は、fetch の要らない `PREFECTURES` 定数を使えます。
+
+```ts
+import { PREFECTURES } from "jp-geocoder";
+// [["01", "北海道"], ["02", "青森県"], …]
+```
+
 ### `geocoder.listMunicipalities(pref, options?)`
 
 都道府県に属する市区町村の一覧を返します（住所文字列の解決ではなく、選択肢を出すための機能）。
@@ -272,6 +288,13 @@ interface MunicipalitiesResult {
 interface Municipality {
   municipality: string; // 行政区の場合は市名（"横浜市"）
   ward?: string[]; // 政令指定都市のみ
+}
+
+interface Prefecture {
+  code: string; // "01"〜"47"
+  name: string;
+  lat: number;
+  lng: number;
 }
 
 interface MunicipalityOptions {

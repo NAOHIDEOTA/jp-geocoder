@@ -9,16 +9,19 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 
-import { buildMunicipalities } from "../dist/core/municipalities.js";
+import {
+  buildMunicipalities,
+  buildPrefectures,
+} from "../dist/core/municipalities.js";
 import { resolvePref } from "../dist/core/pref.js";
 import { createGeocoder } from "../dist/geocode.js";
 
 /** cities.json の部分集合。政令市・特別区・郡部の町・通常の市を1つずつ含む */
 const RECORDS = [
-  { code: "13", pref: "13", name: "東京都", level: "pref", k: [], kk: [] },
+  { code: "13", pref: "13", name: "東京都", level: "pref", lat: 35.68, lng: 139.76, k: [], kk: [] },
   { code: "131016", pref: "13", name: "千代田区", level: "special_ward", k: [], kk: [] },
   { code: "133035", pref: "13", name: "瑞穂町", level: "city", county: "西多摩郡", k: [], kk: [] },
-  { code: "14", pref: "14", name: "神奈川県", level: "pref", k: [], kk: [] },
+  { code: "14", pref: "14", name: "神奈川県", level: "pref", lat: 35.44, lng: 139.63, k: [], kk: [] },
   { code: "141003", pref: "14", name: "横浜市", level: "city", k: [], kk: [] },
   { code: "141011", pref: "14", name: "横浜市鶴見区", level: "ward", parent: "141003", k: [], kk: [] },
   { code: "141020", pref: "14", name: "横浜市神奈川区", level: "ward", parent: "141003", k: [], kk: [] },
@@ -165,5 +168,36 @@ test("listMunicipalities: cities.json は1回しか取りに行かない", async
   });
   await geocoder.listMunicipalities(14);
   await geocoder.listMunicipalities(13);
+  assert.equal(calls, 1);
+});
+
+test("buildPrefectures: 都道府県だけを座標つきでコード順に返す", () => {
+  assert.deepEqual(buildPrefectures(RECORDS), [
+    { code: "13", name: "東京都", lat: 35.68, lng: 139.76 },
+    { code: "14", name: "神奈川県", lat: 35.44, lng: 139.63 },
+  ]);
+});
+
+test("listPrefectures: 出典つきで返り、cities.json を使い回す", async () => {
+  let calls = 0;
+  const geocoder = createGeocoder({
+    fetcher: {
+      async get(path) {
+        calls += 1;
+        if (path === "cities.json")
+          return { generated: "test", source: "test", cities: RECORDS };
+        throw new Error(`unexpected fetch: ${path}`);
+      },
+    },
+  });
+  const { prefectures, attribution } = await geocoder.listPrefectures();
+  assert.deepEqual(
+    prefectures.map((p) => p.name),
+    ["東京都", "神奈川県"],
+  );
+  assert.deepEqual(attribution, ["デジタル庁 アドレス・ベース・レジストリ"]);
+
+  // 市区町村一覧と同じ索引を共有する
+  await geocoder.listMunicipalities(14);
   assert.equal(calls, 1);
 });

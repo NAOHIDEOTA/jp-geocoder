@@ -10,7 +10,7 @@
  */
 
 import type { CityRecord } from "./cities.js";
-import type { DesignatedCityMode, Municipality } from "../types.js";
+import type { DesignatedCityMode, Municipality, Prefecture } from "../types.js";
 
 /**
  * その市区町村が政令指定都市の本体か（＝自分を親に持つ行政区があるか）。
@@ -84,4 +84,22 @@ export function buildMunicipalities(
   }
 
   return out;
+}
+
+/**
+ * 都道府県の一覧を作る。並びは都道府県コード順。
+ *
+ * 名称だけなら PREFECTURES（データ非依存の定数）で足りるが、
+ * 代表点の座標が要る場合はこちらを使う。
+ */
+export function buildPrefectures(records: readonly CityRecord[]): Prefecture[] {
+  return records
+    .filter((r) => r.level === "pref")
+    .sort((a, b) => (a.code < b.code ? -1 : a.code > b.code ? 1 : 0))
+    .map((r) => ({
+      code: r.code,
+      name: r.name,
+      lat: r.lat as number,
+      lng: r.lng as number,
+    }));
 }

@@ -13,7 +13,10 @@ import { fuzzyPrefix } from "./core/distance.js";
 import { toKey, toExactKey } from "./core/normalize.js";
 import { consumePref, resolvePref } from "./core/pref.js";
 import { CityIndex, type CitiesFile, type CityRecord } from "./core/cities.js";
-import { buildMunicipalities } from "./core/municipalities.js";
+import {
+  buildMunicipalities,
+  buildPrefectures,
+} from "./core/municipalities.js";
 import { RailIndex, type RailFile } from "./core/rail.js";
 import { parseTail } from "./core/banchi.js";
 import {
@@ -42,6 +45,7 @@ import type {
   GeocodeResult,
   MunicipalitiesResult,
   MunicipalityOptions,
+  PrefecturesResult,
   LinesResult,
   NearbyStationsResult,
   NearestStationsOptions,
@@ -555,6 +559,14 @@ export function createGeocoder(options: GeocoderOptions = {}): Geocoder {
       return {
         candidates: scored.slice(0, limit).map((s) => s.candidate),
         attribution,
+      };
+    },
+
+    async listPrefectures(): Promise<PrefecturesResult> {
+      const index = await loadIndex();
+      return {
+        prefectures: buildPrefectures(index.records),
+        attribution: [...CITY_ATTRIBUTION],
       };
     },
 

@@ -12,6 +12,8 @@ export type {
   Municipality,
   MunicipalityOptions,
   MunicipalitiesResult,
+  Prefecture,
+  PrefecturesResult,
   Station,
   Line,
   NearbyStation,
