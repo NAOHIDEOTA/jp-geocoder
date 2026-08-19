@@ -673,6 +673,19 @@
         color: var(--err);
       }
 
+      .rescol {
+        display: flex;
+        flex-direction: column;
+        gap: 0.55rem;
+        min-width: 0;
+        max-height: 460px;
+      }
+      .rescol > .card {
+        flex: 1;
+        min-height: 0;
+        max-height: none;
+      }
+
       /* ---- 地図と結果を横に並べる ---- */
       .split {
         display: grid;
@@ -747,23 +760,13 @@
         border-radius: 12px;
         padding: 1.05rem 1.15rem 1.15rem;
         margin-bottom: 1rem;
-        /* 単色だと重いので、紅から少し明るい方へ流して和らげる */
-        background: linear-gradient(
-          135deg,
-          #bc002d 0%,
-          #d6394f 55%,
-          #e0596a 100%
-        );
+        /* 眩しくならないよう深い紅にとどめ、振り幅も小さくする */
+        background: linear-gradient(160deg, #8f0022 0%, #a81733 100%);
         color: #fff;
       }
       @media (prefers-color-scheme: dark) {
         .console {
-          background: linear-gradient(
-            135deg,
-            #8c0022 0%,
-            #a92a41 55%,
-            #bf4557 100%
-          );
+          background: linear-gradient(160deg, #5e0018 0%, #7a1226 100%);
         }
       }
       .clabel {
@@ -889,12 +892,12 @@
               <div class="chips" id="gsamples"></div>
             </div>
           </div>
-          <div class="result idle" id="gresult">まだ実行していません。</div>
           <div class="split">
             <div class="map" id="gmap"></div>
+<div class="rescol">
+<div class="result idle" id="gresult">まだ実行していません。</div>
+
             <div class="card">
-              <div class="cardhead">
-                <span>候補</span>
               </div>
               <div class="scroll">
                 <div id="gout" class="empty">住所を入力してください。</div>
@@ -1079,12 +1082,12 @@
               </div>
             </div>
           </div>
-          <div class="result idle" id="presult">まだ実行していません。</div>
           <div class="split">
             <div class="map" id="pmap"></div>
+<div class="rescol">
+<div class="result idle" id="presult">まだ実行していません。</div>
+
             <div class="card">
-              <div class="cardhead">
-                <span>都道府県</span>
               </div>
               <div class="scroll">
                 <div id="pout" class="empty">「実行」を押してください。</div>
@@ -1209,12 +1212,12 @@
             は行政区ごとに1件（横浜市なら18件）、<code>nested</code>
             は市1件に区をまとめます。郡名は含めません。
           </p>
-          <div class="result idle" id="mresult">まだ実行していません。</div>
           <div class="split">
             <div class="map" id="mmap"></div>
+<div class="rescol">
+<div class="result idle" id="mresult">まだ実行していません。</div>
+
             <div class="card">
-              <div class="cardhead">
-                <span>市区町村</span>
               </div>
               <div class="scroll">
                 <div id="mout" class="empty">都道府県を選んでください。</div>
@@ -1357,12 +1360,12 @@
               </div>
             </div>
           </div>
-          <div class="result idle" id="rresult">まだ実行していません。</div>
           <div class="split">
             <div class="map" id="rmap"></div>
+<div class="rescol">
+<div class="result idle" id="rresult">まだ実行していません。</div>
+
             <div class="card">
-              <div class="cardhead">
-                <span>最寄り駅</span>
               </div>
               <div class="scroll">
                 <div id="rout" class="empty">住所を入力してください。</div>
@@ -1575,12 +1578,12 @@
           <p class="note">
             駅は路線順に並びます。分岐のある路線だけ、分岐箇所で順序が飛びます。
           </p>
-          <div class="result idle" id="lresult">まだ実行していません。</div>
           <div class="split">
             <div class="map" id="lmap"></div>
+<div class="rescol">
+<div class="result idle" id="lresult">まだ実行していません。</div>
+
             <div class="card">
-              <div class="cardhead">
-                <span>駅</span>
               </div>
               <div class="scroll">
                 <div id="lout" class="empty">都道府県を選んでください。</div>
@@ -2155,7 +2158,7 @@
         showCode("listPrefectures()", res);
         const list = res.prefectures;
         result(res2, {
-          lead: `${list.length}件`,
+          lead: `都道府県 ${list.length}件`,
           conds: ["緯度経度つき"],
           cost: cost(ms, fetchCount - before),
         });
@@ -2248,7 +2251,7 @@
         const wards = list.reduce((n, m) => n + (m.ward?.length ?? 0), 0);
         const cities = list.filter((m) => m.ward).length;
         result(res2, {
-          lead: `${list.length}件`,
+          lead: `市区町村 ${list.length}件`,
           conds: [
             wards ? `行政区 ${wards}件` : "政令市なし",
             muniMode === "nested" ? "市にまとめる" : "区ごとに出す",
@@ -2367,7 +2370,7 @@
         const { candidate: c, stations } = res;
         const top = stations[0];
         result(res2, {
-          lead: `${stations.length}駅`,
+          lead: `最寄り駅 ${stations.length}件`,
           conds: [
             $("rgroup").checked ? "乗換駅をまとめる" : "路線ごと",
             `起点は${LEVEL_JA[c.matchLevel] ?? c.matchLevel}`,
@@ -2460,7 +2463,7 @@
             )
             .join("");
         result(res2, {
-          lead: `${res.lines.length}路線`,
+          lead: `路線 ${res.lines.length}件`,
           cost: `fetch ${fetchCount - before}回`,
         });
         out.className = "empty";
@@ -2486,7 +2489,7 @@
         const list = res.stations;
         const selectedPref = prefName($("lpref").value);
         result(res2, {
-          lead: `${list.length}駅`,
+          lead: `駅 ${list.length}件`,
           conds: ["路線順"],
           cost: `fetch ${fetchCount - before}回`,
         });
