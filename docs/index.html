@@ -213,6 +213,9 @@
       .card + .card {
         margin-top: 0;
       }
+      .cardhead .ng {
+        color: var(--err);
+      }
       .cardhead {
         display: flex;
         align-items: center;
@@ -318,33 +321,6 @@
         color: var(--muted);
       }
 
-      /* ステータス */
-      .status {
-        display: flex;
-        flex-wrap: wrap;
-        align-items: center;
-        gap: 0.5rem;
-        min-height: 1.9rem;
-        margin: 0 0 0.85rem;
-        font-size: 0.83rem;
-      }
-      .pill {
-        display: inline-flex;
-        align-items: center;
-        gap: 0.35rem;
-        padding: 0.18rem 0.65rem;
-        border-radius: 999px;
-        font-weight: 600;
-        font-size: 0.79rem;
-      }
-      .pill.ok {
-        color: var(--ok);
-        background: var(--ok-soft);
-      }
-      .pill.err {
-        color: var(--err);
-        background: var(--err-soft);
-      }
       .meta {
         color: var(--muted);
         font-size: 0.78rem;
@@ -658,69 +634,6 @@
         color: #5d6577;
       }
 
-      /* ---- 実行結果の要約（何が手に入ったか） ---- */
-      .hero {
-        display: block;
-        margin: 0 0 1rem;
-        padding: 1.05rem 1.15rem;
-        border: 1px solid var(--line);
-        border-left: 3px solid var(--accent);
-        border-radius: 11px;
-        background: var(--bg-elev);
-      }
-      .hero.idle {
-        border-left-color: var(--line);
-        color: var(--muted);
-        font-size: 0.86rem;
-        padding: 0.85rem 1.15rem;
-      }
-      .hero.bad {
-        border-left-color: var(--err);
-      }
-      .hval {
-        display: flex;
-        align-items: baseline;
-        flex-wrap: wrap;
-        gap: 0.5rem;
-        font-size: 1.5rem;
-        font-weight: 700;
-        letter-spacing: -0.02em;
-        line-height: 1.25;
-      }
-      .hval .unit {
-        font-size: 0.95rem;
-        font-weight: 600;
-        color: var(--muted);
-      }
-      .hero.bad .hval {
-        color: var(--err);
-        font-size: 1.05rem;
-      }
-      .hsub {
-        margin-top: 0.25rem;
-        font-size: 0.9rem;
-        color: var(--fg);
-      }
-      .hmeta {
-        display: flex;
-        align-items: center;
-        flex-wrap: wrap;
-        gap: 0.35rem 0.6rem;
-        margin-top: 0.6rem;
-      }
-      .htag {
-        padding: 0.1rem 0.5rem;
-        border-radius: 999px;
-        background: var(--accent-soft);
-        color: var(--accent);
-        font-size: 0.73rem;
-        font-weight: 600;
-      }
-      .htag.plain {
-        background: var(--bg-soft);
-        color: var(--muted);
-        border: 1px solid var(--line);
-      }
 
       /* ---- 地図と結果を横に並べる ---- */
       .split {
@@ -789,6 +702,42 @@
       .refbox .card + .card {
         border-top: 1px solid var(--line);
       }
+
+      /* ---- 操作するところ ---- */
+      .console {
+        border: 1px solid var(--line);
+        border-top: 3px solid var(--accent);
+        border-radius: 11px;
+        background: var(--bg-elev);
+        padding: 1rem 1.1rem 1.1rem;
+        margin-bottom: 1rem;
+      }
+      .clabel {
+        display: block;
+        margin-bottom: 0.5rem;
+        font-size: 0.78rem;
+        font-weight: 700;
+        color: var(--accent);
+      }
+      .console input[type="search"],
+      .console select {
+        padding: 0.72rem 0.85rem;
+        font-size: 1rem;
+      }
+      .console .btn {
+        padding: 0.72rem 1.4rem;
+        font-size: 0.95rem;
+      }
+      .hint2 {
+        margin: 0.6rem 0 0;
+        font-size: 0.76rem;
+        color: var(--muted);
+      }
+      .phead p {
+        font-size: 1rem;
+        color: var(--fg);
+        margin: 0.4rem 0 0.9rem;
+      }
     </style>
   </head>
   <body>
@@ -835,18 +784,15 @@
         <section id="p-geo">
           <div class="phead">
             <h1>geocode()</h1>
-            <p>
-              住所文字列を緯度経度に変換します。表記ゆれ・タイポ・旧市町村名・カナ入力を
-              吸収し、どこまで解決できたか（<code>matchLevel</code>）と座標の品質
-              （<code>accuracy</code>）を必ず返します。
-            </p>
+            <p>住所を緯度経度にします。表記ゆれ・タイポ・旧市町村名も解決します。</p>
             <code class="sig"
               >geocode(address: string): Promise&lt;GeocodeResult&gt;</code
             >
           </div>
 
-          <div class="card">
-            <div class="cardbody">
+          <div class="console">
+            <span class="clabel">住所を入力</span>
+            <div>
               <form id="gform" class="row">
                 <input
                   id="gq"
@@ -859,237 +805,307 @@
               <div class="chips" id="gsamples"></div>
             </div>
           </div>
-
-          <div class="hero idle" id="gstatus">実行するとここに結果の要約が出ます。</div>
           <div class="split">
-<div class="map" id="gmap"></div>
-<div class="card">
-            <div class="cardhead">
-              <span>候補</span><span id="gcount"></span>
-            </div>
-            <div class="scroll">
-              <div id="gout" class="empty">住所を入力してください。</div>
-            </div>
-          </div>
-</div>
-
-
-          
-
-          <details class="refbox"><summary>引数・レスポンス・読み方</summary>
-<div class="card">
-            <div class="cardhead">引数</div>
-            <table class="ref">
-              <thead>
-                <tr>
-                  <th>名前</th>
-                  <th>型</th>
-                  <th>既定</th>
-                  <th>説明</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td class="name">address<span class="req">必須</span></td>
-                  <td class="type">string</td>
-                  <td class="def">—</td>
-                  <td class="desc">
-                    住所文字列。都道府県の省略・表記ゆれ・カナ入力・タイポ・旧市町村名を許容します。
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-          <div class="card">
-            <div class="cardhead">レスポンス</div>
-            <div class="sub">GeocodeResult</div>
-            <table class="ref">
-              <thead>
-                <tr>
-                  <th>名前</th>
-                  <th>型</th>
-                  <th>既定</th>
-                  <th>説明</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td class="name">candidates</td>
-                  <td class="type">Candidate[]</td>
-                  <td class="def">—</td>
-                  <td class="desc">候補。解決の深さとスコアの順。</td>
-                </tr>
-                <tr>
-                  <td class="name">attribution</td>
-                  <td class="type">string[]</td>
-                  <td class="def">—</td>
-                  <td class="desc">出典表示。表示義務があります。</td>
-                </tr>
-              </tbody>
-            </table>
-            <div class="sub">Candidate</div>
-            <table class="ref">
-              <thead>
-                <tr>
-                  <th>名前</th>
-                  <th>型</th>
-                  <th>既定</th>
-                  <th>説明</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td class="name">address</td>
-                  <td class="type">string</td>
-                  <td class="def">—</td>
-                  <td class="desc">正規化された住所表記。</td>
-                </tr>
-                <tr>
-                  <td class="name">lat / lng</td>
-                  <td class="type">number</td>
-                  <td class="def">—</td>
-                  <td class="desc">緯度経度（JGD2011）。</td>
-                </tr>
-                <tr>
-                  <td class="name">matchLevel</td>
-                  <td class="type">
-                    'rsdt' | 'block' | 'parcel' | 'oaza' | 'city' | 'pref'
-                  </td>
-                  <td class="def">—</td>
-                  <td class="desc">どこまで解決できたか。</td>
-                </tr>
-                <tr>
-                  <td class="name">accuracy</td>
-                  <td class="type">'surveyed' | 'legacy' | 'representative'</td>
-                  <td class="def">—</td>
-                  <td class="desc">その座標の品質。</td>
-                </tr>
-                <tr>
-                  <td class="name">score</td>
-                  <td class="type">number</td>
-                  <td class="def">—</td>
-                  <td class="desc">
-                    一致率 0〜1。完全一致 1.0 / カナ 0.9 / タイポ 0.6。
-                  </td>
-                </tr>
-                <tr>
-                  <td class="name">system</td>
-                  <td class="type">'residential' | 'parcel'</td>
-                  <td class="def">—</td>
-                  <td class="desc">住居表示系か地番系か。</td>
-                </tr>
-                <tr>
-                  <td class="name">components</td>
-                  <td class="type">AddressComponents</td>
-                  <td class="def">—</td>
-                  <td class="desc">
-                    住所の分割結果（pref / city / oaza / chome / block / rsdt
-                    など）。
-                  </td>
-                </tr>
-                <tr>
-                  <td class="name">building</td>
-                  <td class="type">string?</td>
-                  <td class="def">—</td>
-                  <td class="desc">切り離した建物名・部屋番号。</td>
-                </tr>
-                <tr>
-                  <td class="name">machiazaId</td>
-                  <td class="type">string?</td>
-                  <td class="def">—</td>
-                  <td class="desc">町字ID。住所文字列より安定した不変キー。</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-          <div class="card">
-            <div class="cardhead">読み方</div>
-            <div class="legend">
-              <span class="lt">matchLevel — どこまで解決できたか</span>
-              <span
-                ><span class="badge lv-rsdt">rsdt</span> 号（住居表示）</span
-              >
-              <span><span class="badge lv-block">block</span> 番（街区）</span>
-              <span
-                ><span class="badge lv-parcel">parcel</span> 筆（地番）</span
-              >
-              <span><span class="badge lv-oaza">oaza</span> 町字</span>
-              <span><span class="badge lv-city">city</span> 市区町村</span>
-              <span><span class="badge lv-pref">pref</span> 都道府県</span>
-              <span class="lt">accuracy — その座標の品質</span>
-              <span><code>surveyed</code> 実測点</span>
-              <span><code>legacy</code> 公図由来。数十m ずれうる</span>
-              <span
-                ><code>representative</code> 代表点。目的地の点ではない</span
-              >
+            <div class="map" id="gmap"></div>
+            <div class="card">
+              <div class="cardhead">
+                <span>候補</span><span id="gcount"></span>
+              </div>
+              <div class="scroll">
+                <div id="gout" class="empty">住所を入力してください。</div>
+              </div>
             </div>
           </div>
-</details>
 
+          <details class="refbox">
+            <summary>引数・レスポンス・読み方</summary>
+            <div class="card">
+              <div class="cardhead">引数</div>
+              <table class="ref">
+                <thead>
+                  <tr>
+                    <th>名前</th>
+                    <th>型</th>
+                    <th>既定</th>
+                    <th>説明</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td class="name">address<span class="req">必須</span></td>
+                    <td class="type">string</td>
+                    <td class="def">—</td>
+                    <td class="desc">
+                      住所文字列。都道府県の省略・表記ゆれ・カナ入力・タイポ・旧市町村名を許容します。
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="card">
+              <div class="cardhead">レスポンス</div>
+              <div class="sub">GeocodeResult</div>
+              <table class="ref">
+                <thead>
+                  <tr>
+                    <th>名前</th>
+                    <th>型</th>
+                    <th>既定</th>
+                    <th>説明</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td class="name">candidates</td>
+                    <td class="type">Candidate[]</td>
+                    <td class="def">—</td>
+                    <td class="desc">候補。解決の深さとスコアの順。</td>
+                  </tr>
+                  <tr>
+                    <td class="name">attribution</td>
+                    <td class="type">string[]</td>
+                    <td class="def">—</td>
+                    <td class="desc">出典表示。表示義務があります。</td>
+                  </tr>
+                </tbody>
+              </table>
+              <div class="sub">Candidate</div>
+              <table class="ref">
+                <thead>
+                  <tr>
+                    <th>名前</th>
+                    <th>型</th>
+                    <th>既定</th>
+                    <th>説明</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td class="name">address</td>
+                    <td class="type">string</td>
+                    <td class="def">—</td>
+                    <td class="desc">正規化された住所表記。</td>
+                  </tr>
+                  <tr>
+                    <td class="name">lat / lng</td>
+                    <td class="type">number</td>
+                    <td class="def">—</td>
+                    <td class="desc">緯度経度（JGD2011）。</td>
+                  </tr>
+                  <tr>
+                    <td class="name">matchLevel</td>
+                    <td class="type">
+                      'rsdt' | 'block' | 'parcel' | 'oaza' | 'city' | 'pref'
+                    </td>
+                    <td class="def">—</td>
+                    <td class="desc">どこまで解決できたか。</td>
+                  </tr>
+                  <tr>
+                    <td class="name">accuracy</td>
+                    <td class="type">
+                      'surveyed' | 'legacy' | 'representative'
+                    </td>
+                    <td class="def">—</td>
+                    <td class="desc">その座標の品質。</td>
+                  </tr>
+                  <tr>
+                    <td class="name">score</td>
+                    <td class="type">number</td>
+                    <td class="def">—</td>
+                    <td class="desc">
+                      一致率 0〜1。完全一致 1.0 / カナ 0.9 / タイポ 0.6。
+                    </td>
+                  </tr>
+                  <tr>
+                    <td class="name">system</td>
+                    <td class="type">'residential' | 'parcel'</td>
+                    <td class="def">—</td>
+                    <td class="desc">住居表示系か地番系か。</td>
+                  </tr>
+                  <tr>
+                    <td class="name">components</td>
+                    <td class="type">AddressComponents</td>
+                    <td class="def">—</td>
+                    <td class="desc">
+                      住所の分割結果（pref / city / oaza / chome / block / rsdt
+                      など）。
+                    </td>
+                  </tr>
+                  <tr>
+                    <td class="name">building</td>
+                    <td class="type">string?</td>
+                    <td class="def">—</td>
+                    <td class="desc">切り離した建物名・部屋番号。</td>
+                  </tr>
+                  <tr>
+                    <td class="name">machiazaId</td>
+                    <td class="type">string?</td>
+                    <td class="def">—</td>
+                    <td class="desc">
+                      町字ID。住所文字列より安定した不変キー。
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="card">
+              <div class="cardhead">読み方</div>
+              <div class="legend">
+                <span class="lt">matchLevel — どこまで解決できたか</span>
+                <span
+                  ><span class="badge lv-rsdt">rsdt</span> 号（住居表示）</span
+                >
+                <span
+                  ><span class="badge lv-block">block</span> 番（街区）</span
+                >
+                <span
+                  ><span class="badge lv-parcel">parcel</span> 筆（地番）</span
+                >
+                <span><span class="badge lv-oaza">oaza</span> 町字</span>
+                <span><span class="badge lv-city">city</span> 市区町村</span>
+                <span><span class="badge lv-pref">pref</span> 都道府県</span>
+                <span class="lt">accuracy — その座標の品質</span>
+                <span><code>surveyed</code> 実測点</span>
+                <span><code>legacy</code> 公図由来。数十m ずれうる</span>
+                <span
+                  ><code>representative</code> 代表点。目的地の点ではない</span
+                >
+              </div>
+            </div>
+          </details>
         </section>
 
         <!-- listPrefectures -->
         <section id="p-pref" hidden>
           <div class="phead">
             <h1>listPrefectures()</h1>
-            <p>
-              都道府県47件を代表点の座標つきで返します。引数はありません。
-              名称だけで足りるなら、fetch の要らない <code>PREFECTURES</code>
-              定数も使えます。
-            </p>
+            <p>都道府県47件を取ります。代表点の緯度経度つき。</p>
             <code class="sig"
               >listPrefectures(): Promise&lt;PrefecturesResult&gt;</code
             >
           </div>
 
-          <div class="card">
-            <div class="cardbody">
+          <div class="console">
+            <span class="clabel">実行</span>
+            <div>
               <div class="row">
-                <button class="btn" type="button" id="prun">実行</button>
-                <span class="meta"
-                  >引数はありません。cities.json を1回読むだけです。</span
-                >
+                <button class="btn" type="button" id="prun">実行する</button>
+                <span class="meta">引数はありません。</span>
+              </div>
+            </div>
+          </div>
+          <div class="split">
+            <div class="map" id="pmap"></div>
+            <div class="card">
+              <div class="cardhead">
+                <span>都道府県</span><span id="pcount"></span>
+              </div>
+              <div class="scroll">
+                <div id="pout" class="empty">「実行」を押してください。</div>
               </div>
             </div>
           </div>
 
-          <div class="hero idle" id="pstatus">実行するとここに結果の要約が出ます。</div>
-          <div class="split">
-<div class="map" id="pmap"></div>
-<div class="card">
-            <div class="cardhead"><span>都道府県</span><span id="pcount"></span></div>
-            <div class="scroll">
-              <div id="pout" class="empty">「実行」を押してください。</div>
+          <details class="refbox">
+            <summary>引数・レスポンス</summary>
+            <div class="card">
+              <div class="cardhead">引数</div>
+              <table class="ref">
+                <thead>
+                  <tr>
+                    <th>名前</th>
+                    <th>型</th>
+                    <th>既定</th>
+                    <th>説明</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td class="name">—</td>
+                    <td class="type">—</td>
+                    <td class="def">—</td>
+                    <td class="desc">引数はありません。</td>
+                  </tr>
+                </tbody>
+              </table>
             </div>
-          </div>
-</div>
 
-
-          
-
-          <details class="refbox"><summary>引数・レスポンス</summary>
-<div class="card"><div class="cardhead">引数</div><table class="ref"><thead><tr><th>名前</th><th>型</th><th>既定</th><th>説明</th></tr></thead><tbody><tr><td class="name">—</td><td class="type">—</td><td class="def">—</td><td class="desc">引数はありません。</td></tr></tbody></table></div>
-
-          <div class="card"><div class="cardhead">レスポンス</div><div class="sub">PrefecturesResult</div><table class="ref"><thead><tr><th>名前</th><th>型</th><th>既定</th><th>説明</th></tr></thead><tbody><tr><td class="name">prefectures</td><td class="type">Prefecture[]</td><td class="def">—</td><td class="desc">都道府県コード順。47件。</td></tr><tr><td class="name">attribution</td><td class="type">string[]</td><td class="def">—</td><td class="desc">出典表示。</td></tr></tbody></table><div class="sub">Prefecture</div><table class="ref"><thead><tr><th>名前</th><th>型</th><th>既定</th><th>説明</th></tr></thead><tbody><tr><td class="name">code</td><td class="type">string</td><td class="def">—</td><td class="desc">都道府県コード2桁（"01"〜"47"）。</td></tr><tr><td class="name">name</td><td class="type">string</td><td class="def">—</td><td class="desc">都道府県名。</td></tr><tr><td class="name">lat / lng</td><td class="type">number</td><td class="def">—</td><td class="desc">代表点の緯度経度。</td></tr></tbody></table></div>
-</details>
-
+            <div class="card">
+              <div class="cardhead">レスポンス</div>
+              <div class="sub">PrefecturesResult</div>
+              <table class="ref">
+                <thead>
+                  <tr>
+                    <th>名前</th>
+                    <th>型</th>
+                    <th>既定</th>
+                    <th>説明</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td class="name">prefectures</td>
+                    <td class="type">Prefecture[]</td>
+                    <td class="def">—</td>
+                    <td class="desc">都道府県コード順。47件。</td>
+                  </tr>
+                  <tr>
+                    <td class="name">attribution</td>
+                    <td class="type">string[]</td>
+                    <td class="def">—</td>
+                    <td class="desc">出典表示。</td>
+                  </tr>
+                </tbody>
+              </table>
+              <div class="sub">Prefecture</div>
+              <table class="ref">
+                <thead>
+                  <tr>
+                    <th>名前</th>
+                    <th>型</th>
+                    <th>既定</th>
+                    <th>説明</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td class="name">code</td>
+                    <td class="type">string</td>
+                    <td class="def">—</td>
+                    <td class="desc">都道府県コード2桁（"01"〜"47"）。</td>
+                  </tr>
+                  <tr>
+                    <td class="name">name</td>
+                    <td class="type">string</td>
+                    <td class="def">—</td>
+                    <td class="desc">都道府県名。</td>
+                  </tr>
+                  <tr>
+                    <td class="name">lat / lng</td>
+                    <td class="type">number</td>
+                    <td class="def">—</td>
+                    <td class="desc">代表点の緯度経度。</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </details>
         </section>
 
         <!-- listMunicipalities -->
         <section id="p-muni" hidden>
           <div class="phead">
             <h1>listMunicipalities()</h1>
-            <p>
-              都道府県に属する市区町村の一覧を返します。フォームの選択肢に使えます。
-            </p>
+            <p>都道府県から市区町村を取ります。</p>
             <code class="sig"
               >listMunicipalities(pref, options?):
               Promise&lt;MunicipalitiesResult&gt;</code
             >
           </div>
 
-          <div class="card">
-            <div class="cardbody">
+          <div class="console">
+            <span class="clabel">都道府県を選ぶ</span>
+            <div>
               <div class="row">
                 <select id="mpref"></select>
                 <div class="seg" id="mmode">
@@ -1103,147 +1119,138 @@
           </div>
 
           <p class="note">
-            <code>designatedCity</code>
-            は政令指定都市20市の見せ方だけを切り替えます。
-            <code>wards</code> は行政区ごとに1件（横浜市なら18件）、<code
-              >nested</code
-            >
-            は市1件に区をまとめます。特別区・郡部の町村・通常の市はどちらも同じです。
-            郡名は含めません。
+            切り替わるのは政令指定都市20市だけです。<code>wards</code>
+            は行政区ごとに1件（横浜市なら18件）、<code>nested</code>
+            は市1件に区をまとめます。郡名は含めません。
           </p>
-
-          <div class="hero idle" id="mstatus">実行するとここに結果の要約が出ます。</div>
           <div class="split">
-<div class="map" id="mmap"></div>
-<div class="card">
-            <div class="cardhead">
-              <span>市区町村</span><span id="mcount"></span>
+            <div class="map" id="mmap"></div>
+            <div class="card">
+              <div class="cardhead">
+                <span>市区町村</span><span id="mcount"></span>
+              </div>
+              <div class="scroll">
+                <div id="mout" class="empty">都道府県を選んでください。</div>
+              </div>
             </div>
-            <div class="scroll">
-              <div id="mout" class="empty">都道府県を選んでください。</div>
+          </div>
+
+          <details class="refbox">
+            <summary>引数・レスポンス</summary>
+            <div class="card">
+              <div class="cardhead">引数</div>
+              <table class="ref">
+                <thead>
+                  <tr>
+                    <th>名前</th>
+                    <th>型</th>
+                    <th>既定</th>
+                    <th>説明</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td class="name">pref<span class="req">必須</span></td>
+                    <td class="type">string | number</td>
+                    <td class="def">—</td>
+                    <td class="desc">
+                      コード（1〜47 / "01"）または名称（"神奈川県" /
+                      "神奈川"）。解決できなければ空配列を返します。
+                    </td>
+                  </tr>
+                  <tr>
+                    <td class="name">options.designatedCity</td>
+                    <td class="type">'wards' | 'nested'</td>
+                    <td class="def">'wards'</td>
+                    <td class="desc">政令指定都市20市の行政区の並べ方。</td>
+                  </tr>
+                </tbody>
+              </table>
             </div>
-          </div>
-</div>
-
-
-          <details class="refbox"><summary>引数・レスポンス</summary>
-<div class="card">
-            <div class="cardhead">引数</div>
-            <table class="ref">
-              <thead>
-                <tr>
-                  <th>名前</th>
-                  <th>型</th>
-                  <th>既定</th>
-                  <th>説明</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td class="name">pref<span class="req">必須</span></td>
-                  <td class="type">string | number</td>
-                  <td class="def">—</td>
-                  <td class="desc">
-                    コード（1〜47 / "01"）または名称（"神奈川県" /
-                    "神奈川"）。解決できなければ空配列を返します。
-                  </td>
-                </tr>
-                <tr>
-                  <td class="name">options.designatedCity</td>
-                  <td class="type">'wards' | 'nested'</td>
-                  <td class="def">'wards'</td>
-                  <td class="desc">政令指定都市20市の行政区の並べ方。</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-          <div class="card">
-            <div class="cardhead">レスポンス</div>
-            <div class="sub">MunicipalitiesResult</div>
-            <table class="ref">
-              <thead>
-                <tr>
-                  <th>名前</th>
-                  <th>型</th>
-                  <th>既定</th>
-                  <th>説明</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td class="name">municipalities</td>
-                  <td class="type">Municipality[]</td>
-                  <td class="def">—</td>
-                  <td class="desc">団体コード順。</td>
-                </tr>
-                <tr>
-                  <td class="name">attribution</td>
-                  <td class="type">string[]</td>
-                  <td class="def">—</td>
-                  <td class="desc">出典表示。</td>
-                </tr>
-              </tbody>
-            </table>
-            <div class="sub">Municipality</div>
-            <table class="ref">
-              <thead>
-                <tr>
-                  <th>名前</th>
-                  <th>型</th>
-                  <th>既定</th>
-                  <th>説明</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td class="name">municipality</td>
-                  <td class="type">string</td>
-                  <td class="def">—</td>
-                  <td class="desc">
-                    市区町村名。行政区の場合は市名（"横浜市"）。
-                  </td>
-                </tr>
-                <tr>
-                  <td class="name">ward</td>
-                  <td class="type">string[]?</td>
-                  <td class="def">—</td>
-                  <td class="desc">
-                    政令指定都市の行政区。政令市以外では省略されます。
-                  </td>
-                </tr>
-                <tr>
-                  <td class="name">lat / lng</td>
-                  <td class="type">number</td>
-                  <td class="def">—</td>
-                  <td class="desc">
-                    代表点。この1件が指す団体のものです。<code>wards</code>
-                    なら行政区（横浜市鶴見区）、<code>nested</code>
-                    なら市そのもの（横浜市）の点になります。
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-</details>
-
+            <div class="card">
+              <div class="cardhead">レスポンス</div>
+              <div class="sub">MunicipalitiesResult</div>
+              <table class="ref">
+                <thead>
+                  <tr>
+                    <th>名前</th>
+                    <th>型</th>
+                    <th>既定</th>
+                    <th>説明</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td class="name">municipalities</td>
+                    <td class="type">Municipality[]</td>
+                    <td class="def">—</td>
+                    <td class="desc">団体コード順。</td>
+                  </tr>
+                  <tr>
+                    <td class="name">attribution</td>
+                    <td class="type">string[]</td>
+                    <td class="def">—</td>
+                    <td class="desc">出典表示。</td>
+                  </tr>
+                </tbody>
+              </table>
+              <div class="sub">Municipality</div>
+              <table class="ref">
+                <thead>
+                  <tr>
+                    <th>名前</th>
+                    <th>型</th>
+                    <th>既定</th>
+                    <th>説明</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td class="name">municipality</td>
+                    <td class="type">string</td>
+                    <td class="def">—</td>
+                    <td class="desc">
+                      市区町村名。行政区の場合は市名（"横浜市"）。
+                    </td>
+                  </tr>
+                  <tr>
+                    <td class="name">ward</td>
+                    <td class="type">string[]?</td>
+                    <td class="def">—</td>
+                    <td class="desc">
+                      政令指定都市の行政区。政令市以外では省略されます。
+                    </td>
+                  </tr>
+                  <tr>
+                    <td class="name">lat / lng</td>
+                    <td class="type">number</td>
+                    <td class="def">—</td>
+                    <td class="desc">
+                      代表点。この1件が指す団体のものです。<code>wards</code>
+                      なら行政区（横浜市鶴見区）、<code>nested</code>
+                      なら市そのもの（横浜市）の点になります。
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </details>
         </section>
 
         <!-- nearestStationsByAddress -->
         <section id="p-rail" hidden>
           <div class="phead">
             <h1>nearestStationsByAddress()</h1>
-            <p>
-              住所を座標に変換し、そのまま最寄り駅を返します。全国 10,465駅。
-              距離は直線距離[m]です。
-            </p>
+            <p>住所から最寄り駅を取ります。全国10,465駅。</p>
             <code class="sig"
               >nearestStationsByAddress(address, options?):
               Promise&lt;…&gt;</code
             >
           </div>
 
-          <div class="card">
-            <div class="cardbody">
+          <div class="console">
+            <span class="clabel">住所を入力</span>
+            <div>
               <form id="rform" class="row">
                 <input
                   id="rq"
@@ -1263,213 +1270,211 @@
               </div>
             </div>
           </div>
-
-          <div class="hero idle" id="rstatus">実行するとここに結果の要約が出ます。</div>
           <div class="split">
-<div class="map" id="rmap"></div>
-<div class="card">
-            <div class="cardhead">
-              <span>最寄り駅</span><span id="rcount"></span>
+            <div class="map" id="rmap"></div>
+            <div class="card">
+              <div class="cardhead">
+                <span>最寄り駅</span><span id="rcount"></span>
+              </div>
+              <div class="scroll">
+                <div id="rout" class="empty">住所を入力してください。</div>
+              </div>
             </div>
-            <div class="scroll">
-              <div id="rout" class="empty">住所を入力してください。</div>
+          </div>
+
+          <details class="refbox">
+            <summary>引数・レスポンス</summary>
+            <div class="card">
+              <div class="cardhead">引数</div>
+              <table class="ref">
+                <thead>
+                  <tr>
+                    <th>名前</th>
+                    <th>型</th>
+                    <th>既定</th>
+                    <th>説明</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td class="name">address<span class="req">必須</span></td>
+                    <td class="type">string</td>
+                    <td class="def">—</td>
+                    <td class="desc">
+                      住所文字列。内部で geocode() に渡します。
+                    </td>
+                  </tr>
+                  <tr>
+                    <td class="name">options.limit</td>
+                    <td class="type">number</td>
+                    <td class="def">10</td>
+                    <td class="desc">返す件数。</td>
+                  </tr>
+                  <tr>
+                    <td class="name">options.groupByStation</td>
+                    <td class="type">boolean</td>
+                    <td class="def">false</td>
+                    <td class="desc">
+                      乗換駅を1件にまとめるか。false
+                      だと乗り入れ路線の数だけ並びます。
+                    </td>
+                  </tr>
+                  <tr>
+                    <td class="name">options.maxDistance</td>
+                    <td class="type">number?</td>
+                    <td class="def">—</td>
+                    <td class="desc">この距離[m]より遠い駅を返しません。</td>
+                  </tr>
+                </tbody>
+              </table>
             </div>
-          </div>
-</div>
-
-
-          <details class="refbox"><summary>引数・レスポンス</summary>
-<div class="card">
-            <div class="cardhead">引数</div>
-            <table class="ref">
-              <thead>
-                <tr>
-                  <th>名前</th>
-                  <th>型</th>
-                  <th>既定</th>
-                  <th>説明</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td class="name">address<span class="req">必須</span></td>
-                  <td class="type">string</td>
-                  <td class="def">—</td>
-                  <td class="desc">
-                    住所文字列。内部で geocode() に渡します。
-                  </td>
-                </tr>
-                <tr>
-                  <td class="name">options.limit</td>
-                  <td class="type">number</td>
-                  <td class="def">10</td>
-                  <td class="desc">返す件数。</td>
-                </tr>
-                <tr>
-                  <td class="name">options.groupByStation</td>
-                  <td class="type">boolean</td>
-                  <td class="def">false</td>
-                  <td class="desc">
-                    乗換駅を1件にまとめるか。false
-                    だと乗り入れ路線の数だけ並びます。
-                  </td>
-                </tr>
-                <tr>
-                  <td class="name">options.maxDistance</td>
-                  <td class="type">number?</td>
-                  <td class="def">—</td>
-                  <td class="desc">この距離[m]より遠い駅を返しません。</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-          <div class="card">
-            <div class="cardhead">レスポンス</div>
-            <table class="ref">
-              <thead>
-                <tr>
-                  <th>名前</th>
-                  <th>型</th>
-                  <th>既定</th>
-                  <th>説明</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td class="name">candidate</td>
-                  <td class="type">Candidate | null</td>
-                  <td class="def">—</td>
-                  <td class="desc">住所の解決結果。解決できなければ null。</td>
-                </tr>
-                <tr>
-                  <td class="name">stations</td>
-                  <td class="type">NearbyStation[]</td>
-                  <td class="def">—</td>
-                  <td class="desc">近い順。</td>
-                </tr>
-                <tr>
-                  <td class="name">attribution</td>
-                  <td class="type">string[]</td>
-                  <td class="def">—</td>
-                  <td class="desc">出典表示。</td>
-                </tr>
-              </tbody>
-            </table>
-            <div class="sub">NearbyStation</div>
-            <table class="ref">
-              <thead>
-                <tr>
-                  <th>名前</th>
-                  <th>型</th>
-                  <th>既定</th>
-                  <th>説明</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td class="name">station</td>
-                  <td class="type">Station</td>
-                  <td class="def">—</td>
-                  <td class="desc">駅。</td>
-                </tr>
-                <tr>
-                  <td class="name">distance</td>
-                  <td class="type">number</td>
-                  <td class="def">—</td>
-                  <td class="desc">
-                    指定座標からの直線距離[m]。徒歩の経路距離ではありません。
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-            <div class="sub">Station</div>
-            <table class="ref">
-              <thead>
-                <tr>
-                  <th>名前</th>
-                  <th>型</th>
-                  <th>既定</th>
-                  <th>説明</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td class="name">code</td>
-                  <td class="type">number</td>
-                  <td class="def">—</td>
-                  <td class="desc">駅コード。</td>
-                </tr>
-                <tr>
-                  <td class="name">groupCode</td>
-                  <td class="type">number</td>
-                  <td class="def">—</td>
-                  <td class="desc">
-                    同一駅グループ。乗換で結ばれる駅どうしで同じ値。
-                  </td>
-                </tr>
-                <tr>
-                  <td class="name">name</td>
-                  <td class="type">string</td>
-                  <td class="def">—</td>
-                  <td class="desc">駅名。</td>
-                </tr>
-                <tr>
-                  <td class="name">lineCode / lineName</td>
-                  <td class="type">number / string</td>
-                  <td class="def">—</td>
-                  <td class="desc">路線。</td>
-                </tr>
-                <tr>
-                  <td class="name">company</td>
-                  <td class="type">string</td>
-                  <td class="def">—</td>
-                  <td class="desc">事業者名。</td>
-                </tr>
-                <tr>
-                  <td class="name">pref</td>
-                  <td class="type">number</td>
-                  <td class="def">—</td>
-                  <td class="desc">都道府県コード 1〜47。</td>
-                </tr>
-                <tr>
-                  <td class="name">postalCode</td>
-                  <td class="type">string</td>
-                  <td class="def">—</td>
-                  <td class="desc">郵便番号（ハイフンなし7桁）。</td>
-                </tr>
-                <tr>
-                  <td class="name">address</td>
-                  <td class="type">string</td>
-                  <td class="def">—</td>
-                  <td class="desc">住所。</td>
-                </tr>
-                <tr>
-                  <td class="name">lat / lng</td>
-                  <td class="type">number</td>
-                  <td class="def">—</td>
-                  <td class="desc">緯度経度。</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-</details>
-
+            <div class="card">
+              <div class="cardhead">レスポンス</div>
+              <table class="ref">
+                <thead>
+                  <tr>
+                    <th>名前</th>
+                    <th>型</th>
+                    <th>既定</th>
+                    <th>説明</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td class="name">candidate</td>
+                    <td class="type">Candidate | null</td>
+                    <td class="def">—</td>
+                    <td class="desc">
+                      住所の解決結果。解決できなければ null。
+                    </td>
+                  </tr>
+                  <tr>
+                    <td class="name">stations</td>
+                    <td class="type">NearbyStation[]</td>
+                    <td class="def">—</td>
+                    <td class="desc">近い順。</td>
+                  </tr>
+                  <tr>
+                    <td class="name">attribution</td>
+                    <td class="type">string[]</td>
+                    <td class="def">—</td>
+                    <td class="desc">出典表示。</td>
+                  </tr>
+                </tbody>
+              </table>
+              <div class="sub">NearbyStation</div>
+              <table class="ref">
+                <thead>
+                  <tr>
+                    <th>名前</th>
+                    <th>型</th>
+                    <th>既定</th>
+                    <th>説明</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td class="name">station</td>
+                    <td class="type">Station</td>
+                    <td class="def">—</td>
+                    <td class="desc">駅。</td>
+                  </tr>
+                  <tr>
+                    <td class="name">distance</td>
+                    <td class="type">number</td>
+                    <td class="def">—</td>
+                    <td class="desc">
+                      指定座標からの直線距離[m]。徒歩の経路距離ではありません。
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+              <div class="sub">Station</div>
+              <table class="ref">
+                <thead>
+                  <tr>
+                    <th>名前</th>
+                    <th>型</th>
+                    <th>既定</th>
+                    <th>説明</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td class="name">code</td>
+                    <td class="type">number</td>
+                    <td class="def">—</td>
+                    <td class="desc">駅コード。</td>
+                  </tr>
+                  <tr>
+                    <td class="name">groupCode</td>
+                    <td class="type">number</td>
+                    <td class="def">—</td>
+                    <td class="desc">
+                      同一駅グループ。乗換で結ばれる駅どうしで同じ値。
+                    </td>
+                  </tr>
+                  <tr>
+                    <td class="name">name</td>
+                    <td class="type">string</td>
+                    <td class="def">—</td>
+                    <td class="desc">駅名。</td>
+                  </tr>
+                  <tr>
+                    <td class="name">lineCode / lineName</td>
+                    <td class="type">number / string</td>
+                    <td class="def">—</td>
+                    <td class="desc">路線。</td>
+                  </tr>
+                  <tr>
+                    <td class="name">company</td>
+                    <td class="type">string</td>
+                    <td class="def">—</td>
+                    <td class="desc">事業者名。</td>
+                  </tr>
+                  <tr>
+                    <td class="name">pref</td>
+                    <td class="type">number</td>
+                    <td class="def">—</td>
+                    <td class="desc">都道府県コード 1〜47。</td>
+                  </tr>
+                  <tr>
+                    <td class="name">postalCode</td>
+                    <td class="type">string</td>
+                    <td class="def">—</td>
+                    <td class="desc">郵便番号（ハイフンなし7桁）。</td>
+                  </tr>
+                  <tr>
+                    <td class="name">address</td>
+                    <td class="type">string</td>
+                    <td class="def">—</td>
+                    <td class="desc">住所。</td>
+                  </tr>
+                  <tr>
+                    <td class="name">lat / lng</td>
+                    <td class="type">number</td>
+                    <td class="def">—</td>
+                    <td class="desc">緯度経度。</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </details>
         </section>
 
         <!-- listLines / listStations -->
         <section id="p-line" hidden>
           <div class="phead">
             <h1>listLines() / listStations()</h1>
-            <p>
-              都道府県に乗り入れる路線を出し、選んだ路線の駅を路線順に返します。
-            </p>
+            <p>都道府県から路線、路線から駅を取ります。</p>
             <code class="sig"
               >listLines(pref) → listStations({ pref, line })</code
             >
           </div>
 
-          <div class="card">
-            <div class="cardbody">
+          <div class="console">
+            <span class="clabel">都道府県 → 路線 の順に選ぶ</span>
+            <div>
               <div class="row">
                 <select id="lpref"></select>
                 <select id="lline">
@@ -1480,158 +1485,156 @@
           </div>
 
           <p class="note">
-            駅は路線上の並び順で返します（駅コード順ではありません）。分岐のある路線は
-            1本の列に並べられないため、分岐箇所だけ順序が飛びます。
+            駅は路線順に並びます。分岐のある路線だけ、分岐箇所で順序が飛びます。
           </p>
-
-          <div class="hero idle" id="lstatus">実行するとここに結果の要約が出ます。</div>
           <div class="split">
-<div class="map" id="lmap"></div>
-<div class="card">
-            <div class="cardhead"><span>駅</span><span id="lcount"></span></div>
-            <div class="scroll">
-              <div id="lout" class="empty">都道府県を選んでください。</div>
+            <div class="map" id="lmap"></div>
+            <div class="card">
+              <div class="cardhead">
+                <span>駅</span><span id="lcount"></span>
+              </div>
+              <div class="scroll">
+                <div id="lout" class="empty">都道府県を選んでください。</div>
+              </div>
             </div>
           </div>
-</div>
 
-
-          <details class="refbox"><summary>引数・レスポンス</summary>
-<div class="card">
-            <div class="cardhead">引数</div>
-            <div class="sub">listLines(pref)</div>
-            <table class="ref">
-              <thead>
-                <tr>
-                  <th>名前</th>
-                  <th>型</th>
-                  <th>既定</th>
-                  <th>説明</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td class="name">pref<span class="req">必須</span></td>
-                  <td class="type">string | number</td>
-                  <td class="def">—</td>
-                  <td class="desc">
-                    コードまたは名称。その都道府県に駅がある路線だけを返します。
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-            <div class="sub">listStations(query?)</div>
-            <table class="ref">
-              <thead>
-                <tr>
-                  <th>名前</th>
-                  <th>型</th>
-                  <th>既定</th>
-                  <th>説明</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td class="name">query.pref</td>
-                  <td class="type">string | number?</td>
-                  <td class="def">—</td>
-                  <td class="desc">都道府県で絞り込み。省略すると全国。</td>
-                </tr>
-                <tr>
-                  <td class="name">query.line</td>
-                  <td class="type">number?</td>
-                  <td class="def">—</td>
-                  <td class="desc">路線コードで絞り込み。</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-          <div class="card">
-            <div class="cardhead">レスポンス</div>
-            <div class="sub">LinesResult</div>
-            <table class="ref">
-              <thead>
-                <tr>
-                  <th>名前</th>
-                  <th>型</th>
-                  <th>既定</th>
-                  <th>説明</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td class="name">lines</td>
-                  <td class="type">Line[]</td>
-                  <td class="def">—</td>
-                  <td class="desc">路線コード順。</td>
-                </tr>
-                <tr>
-                  <td class="name">attribution</td>
-                  <td class="type">string[]</td>
-                  <td class="def">—</td>
-                  <td class="desc">出典表示。</td>
-                </tr>
-              </tbody>
-            </table>
-            <div class="sub">Line</div>
-            <table class="ref">
-              <thead>
-                <tr>
-                  <th>名前</th>
-                  <th>型</th>
-                  <th>既定</th>
-                  <th>説明</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td class="name">code</td>
-                  <td class="type">number</td>
-                  <td class="def">—</td>
-                  <td class="desc">路線コード。</td>
-                </tr>
-                <tr>
-                  <td class="name">name</td>
-                  <td class="type">string</td>
-                  <td class="def">—</td>
-                  <td class="desc">路線名。</td>
-                </tr>
-                <tr>
-                  <td class="name">company</td>
-                  <td class="type">string</td>
-                  <td class="def">—</td>
-                  <td class="desc">事業者名。</td>
-                </tr>
-              </tbody>
-            </table>
-            <div class="sub">StationsResult</div>
-            <table class="ref">
-              <thead>
-                <tr>
-                  <th>名前</th>
-                  <th>型</th>
-                  <th>既定</th>
-                  <th>説明</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td class="name">stations</td>
-                  <td class="type">Station[]</td>
-                  <td class="def">—</td>
-                  <td class="desc">路線上の並び順。</td>
-                </tr>
-                <tr>
-                  <td class="name">attribution</td>
-                  <td class="type">string[]</td>
-                  <td class="def">—</td>
-                  <td class="desc">出典表示。</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-</details>
-
+          <details class="refbox">
+            <summary>引数・レスポンス</summary>
+            <div class="card">
+              <div class="cardhead">引数</div>
+              <div class="sub">listLines(pref)</div>
+              <table class="ref">
+                <thead>
+                  <tr>
+                    <th>名前</th>
+                    <th>型</th>
+                    <th>既定</th>
+                    <th>説明</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td class="name">pref<span class="req">必須</span></td>
+                    <td class="type">string | number</td>
+                    <td class="def">—</td>
+                    <td class="desc">
+                      コードまたは名称。その都道府県に駅がある路線だけを返します。
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+              <div class="sub">listStations(query?)</div>
+              <table class="ref">
+                <thead>
+                  <tr>
+                    <th>名前</th>
+                    <th>型</th>
+                    <th>既定</th>
+                    <th>説明</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td class="name">query.pref</td>
+                    <td class="type">string | number?</td>
+                    <td class="def">—</td>
+                    <td class="desc">都道府県で絞り込み。省略すると全国。</td>
+                  </tr>
+                  <tr>
+                    <td class="name">query.line</td>
+                    <td class="type">number?</td>
+                    <td class="def">—</td>
+                    <td class="desc">路線コードで絞り込み。</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="card">
+              <div class="cardhead">レスポンス</div>
+              <div class="sub">LinesResult</div>
+              <table class="ref">
+                <thead>
+                  <tr>
+                    <th>名前</th>
+                    <th>型</th>
+                    <th>既定</th>
+                    <th>説明</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td class="name">lines</td>
+                    <td class="type">Line[]</td>
+                    <td class="def">—</td>
+                    <td class="desc">路線コード順。</td>
+                  </tr>
+                  <tr>
+                    <td class="name">attribution</td>
+                    <td class="type">string[]</td>
+                    <td class="def">—</td>
+                    <td class="desc">出典表示。</td>
+                  </tr>
+                </tbody>
+              </table>
+              <div class="sub">Line</div>
+              <table class="ref">
+                <thead>
+                  <tr>
+                    <th>名前</th>
+                    <th>型</th>
+                    <th>既定</th>
+                    <th>説明</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td class="name">code</td>
+                    <td class="type">number</td>
+                    <td class="def">—</td>
+                    <td class="desc">路線コード。</td>
+                  </tr>
+                  <tr>
+                    <td class="name">name</td>
+                    <td class="type">string</td>
+                    <td class="def">—</td>
+                    <td class="desc">路線名。</td>
+                  </tr>
+                  <tr>
+                    <td class="name">company</td>
+                    <td class="type">string</td>
+                    <td class="def">—</td>
+                    <td class="desc">事業者名。</td>
+                  </tr>
+                </tbody>
+              </table>
+              <div class="sub">StationsResult</div>
+              <table class="ref">
+                <thead>
+                  <tr>
+                    <th>名前</th>
+                    <th>型</th>
+                    <th>既定</th>
+                    <th>説明</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td class="name">stations</td>
+                    <td class="type">Station[]</td>
+                    <td class="def">—</td>
+                    <td class="desc">路線上の並び順。</td>
+                  </tr>
+                  <tr>
+                    <td class="name">attribution</td>
+                    <td class="type">string[]</td>
+                    <td class="def">—</td>
+                    <td class="desc">出典表示。</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </details>
         </section>
       </main>
 
@@ -1686,6 +1689,21 @@
       const geo = createGeocoder({ baseUrl: BASE, fetcher, limit: 5 });
 
       const $ = (id) => document.getElementById(id);
+
+      /** 画面に出す日本語。生のフィールド名は右の Response で見られる */
+      const LEVEL_JA = {
+        rsdt: "号まで特定",
+        block: "番まで特定",
+        parcel: "地番まで特定",
+        oaza: "町字まで特定",
+        city: "市区町村まで特定",
+        pref: "都道府県まで特定",
+      };
+      const ACC_JA = {
+        surveyed: "実測点",
+        legacy: "公図由来",
+        representative: "代表点",
+      };
       const esc = (s) =>
         String(s ?? "").replace(
           /[&<>"]/g,
@@ -1744,38 +1762,32 @@
       }
 
       /**
-       * 実行結果の要約。何が手に入ったのかを最初に見せる。
-       * value を主役にし、補足を sub、条件や所要時間を tags / meta に置く。
+       * 結果カードの見出しに出す要約。件数・条件・所要時間だけを並べる。
+       * 中身そのものは隣の表と地図が見せるので、ここでは繰り返さない。
        */
-      function hero(el, { value, unit = "", sub = "", tags = [], meta = "" }) {
-        el.className = "hero";
-        el.innerHTML =
-          `<div class="hval">${value}${unit ? `<span class="unit">${unit}</span>` : ""}</div>` +
-          (sub ? `<div class="hsub">${sub}</div>` : "") +
-          `<div class="hmeta">` +
-          tags
-            .map((t) => `<span class="htag ${t.plain ? "plain" : ""}">${t.text}</span>`)
-            .join("") +
-          (meta ? `<span class="meta">${meta}</span>` : "") +
-          `</div>`;
+      function summary(el, parts) {
+        el.innerHTML = parts.filter(Boolean).join(" ・ ");
       }
-      function heroBad(el, text, detail = "") {
-        el.className = "hero bad";
-        el.innerHTML =
-          `<div class="hval">✕ ${text}</div>` +
-          (detail ? `<div class="hmeta"><span class="meta">${detail}</span></div>` : "");
+      /** 失敗はその場（結果の表示領域）に出す */
+      function bad(outEl, countEl, text, detail = "") {
+        countEl.innerHTML = `<span class="ng">✕ ${text}</span>`;
+        outEl.className = "empty";
+        outEl.textContent = detail || text;
       }
       /** 所要時間と fetch 回数。どの画面でも同じ形で出す */
       const cost = (ms, n) => `${ms.toFixed(0)}ms ・ fetch ${n}回`;
 
       /** 配信物が取れなかったときの共通表示。黙って何も起きない状態を作らない */
-      function fail(statusEl, outEl, file, error) {
+      function fail(outEl, countEl, file, error) {
         const msg = String(error?.message ?? error);
-        heroBad(statusEl, `${esc(file)} を読めません`, esc(msg));
-        outEl.className = "empty";
-        outEl.textContent = /40\d/.test(msg)
-          ? `${file} がまだ配信されていません。`
-          : `${file} の取得に失敗しました。`;
+        bad(
+          outEl,
+          countEl,
+          `${esc(file)} を読めません`,
+          /40\d/.test(msg)
+            ? `${file} がまだ配信されていません。`
+            : `${file} の取得に失敗しました。（${msg}）`,
+        );
         showError(file, error);
       }
 
@@ -1786,7 +1798,8 @@
         geo: () =>
           HEADER +
           `const { candidates } = await geocoder.geocode(\n  ${lit($("gq").value || "東京都世田谷区太子堂5-5-5")},\n);`,
-        pref: () => HEADER + `const { prefectures } = await geocoder.listPrefectures();`,
+        pref: () =>
+          HEADER + `const { prefectures } = await geocoder.listPrefectures();`,
         muni: () => {
           const name = prefName($("mpref").value) || "神奈川県";
           return (
@@ -1941,14 +1954,12 @@
       async function runGeo(text) {
         syncReq("geo");
         const input = text.trim();
-        const status = $("gstatus"),
+        const count = $("gcount"),
           out = $("gout");
         if (!input) {
-          status.className = "hero idle";
-          status.textContent = "住所を入力すると結果の要約が出ます。";
+          count.textContent = "";
           out.className = "empty";
           out.textContent = "住所を入力してください。";
-          $("gcount").textContent = "";
           return;
         }
         const my = ++gseq,
@@ -1959,7 +1970,7 @@
           res = await geo.geocode(input);
         } catch (e) {
           if (my !== gseq) return;
-          fail(status, out, "配信データ", e);
+          fail(out, count, "配信データ", e);
           return;
         }
         if (my !== gseq) return;
@@ -1968,29 +1979,23 @@
 
         const c = res.candidates[0];
         if (!c) {
-          heroBad(status, "住所を解決できません", "入力を確認してください");
+          bad(out, count, "住所を解決できません", "入力を確認してください");
           out.className = "empty";
           out.textContent = "候補なし。";
-          $("gcount").textContent = "0";
           return;
         }
-        hero(status, {
-          value: `${c.lat}, ${c.lng}`,
-          sub: esc(c.address),
-          tags: [
-            { text: `matchLevel ${esc(c.matchLevel)}` },
-            { text: `accuracy ${esc(c.accuracy)}` },
-            { text: `score ${c.score}`, plain: true },
-            { text: `候補 ${res.candidates.length}件`, plain: true },
-          ],
-          meta: cost(ms, fetchCount - before),
-        });
-        $("gcount").textContent = `${res.candidates.length}件`;
+        summary(count, [
+          `候補 ${res.candidates.length}件`,
+          LEVEL_JA[c.matchLevel] ?? c.matchLevel,
+          ACC_JA[c.accuracy] ?? c.accuracy,
+          `一致率 ${Math.round(c.score * 100)}%`,
+          cost(ms, fetchCount - before),
+        ]);
         pin(c);
 
         out.className = "";
         out.innerHTML = `<table>
-          <thead><tr><th>住所</th><th>緯度経度</th><th>matchLevel</th><th>accuracy</th><th>score</th></tr></thead>
+          <thead><tr><th>住所</th><th>緯度経度</th><th>どこまで特定できたか</th><th>座標の品質</th><th>一致率</th></tr></thead>
           <tbody>${res.candidates
             .map(
               (
@@ -1999,9 +2004,9 @@
               ) => `<tr class="click ${i === 0 ? "sel" : ""}" data-i="${i}">
                 <td class="wide">${esc(x.address)}<div class="tags">${partsOf(x)}</div></td>
                 <td class="mono">${x.lat}, ${x.lng}</td>
-                <td><span class="badge lv-${esc(x.matchLevel)}">${esc(x.matchLevel)}</span></td>
-                <td>${esc(x.accuracy)}</td>
-                <td class="num">${x.score}</td>
+                <td><span class="badge lv-${esc(x.matchLevel)}">${esc(LEVEL_JA[x.matchLevel] ?? x.matchLevel)}</span></td>
+                <td>${esc(ACC_JA[x.accuracy] ?? x.accuracy)}</td>
+                <td class="num">${Math.round(x.score * 100)}%</td>
               </tr>`,
             )
             .join("")}</tbody></table>`;
@@ -2035,26 +2040,25 @@
 
       async function runPref() {
         syncReq("pref");
-        const status = $("pstatus"), out = $("pout");
-        const before = fetchCount, t0 = performance.now();
+        const count = $("pcount"),
+          out = $("pout");
+        const before = fetchCount,
+          t0 = performance.now();
         let res;
         try {
           res = await geo.listPrefectures();
         } catch (e) {
-          fail(status, out, "cities.json", e);
+          fail(out, count, "cities.json", e);
           return;
         }
         const ms = performance.now() - t0;
         showCode("listPrefectures()", res);
         const list = res.prefectures;
-        hero(status, {
-          value: list.length,
-          unit: "都道府県",
-          sub: "コード・名称・代表点の緯度経度が入っています。",
-          tags: [{ text: "座標つき" }, { text: "コード順", plain: true }],
-          meta: cost(ms, fetchCount - before),
-        });
-        $("pcount").textContent = `${list.length}件`;
+        summary(count, [
+          `${list.length}件`,
+          "緯度経度つき",
+          cost(ms, fetchCount - before),
+        ]);
 
         pLayer.clearLayers();
         for (const p of list) {
@@ -2071,7 +2075,7 @@
         out.dataset.done = "1";
         out.className = "";
         out.innerHTML = `<table>
-          <thead><tr><th>code</th><th>name</th><th>lat</th><th>lng</th></tr></thead>
+          <thead><tr><th>コード</th><th>都道府県</th><th>緯度</th><th>経度</th></tr></thead>
           <tbody>${list
             .map(
               (p) => `<tr class="click" data-lat="${p.lat}" data-lng="${p.lng}">
@@ -2084,11 +2088,17 @@
             .join("")}</tbody></table>`;
         out.querySelectorAll("tbody tr").forEach((tr) => {
           tr.addEventListener("click", () => {
-            out.querySelectorAll("tr.sel").forEach((x) => x.classList.remove("sel"));
+            out
+              .querySelectorAll("tr.sel")
+              .forEach((x) => x.classList.remove("sel"));
             tr.classList.add("sel");
-            maps.pref.flyTo([Number(tr.dataset.lat), Number(tr.dataset.lng)], 9, {
-              duration: 0.6,
-            });
+            maps.pref.flyTo(
+              [Number(tr.dataset.lat), Number(tr.dataset.lng)],
+              9,
+              {
+                duration: 0.6,
+              },
+            );
           });
         });
       }
@@ -2112,14 +2122,12 @@
       async function runMuni() {
         syncReq("muni");
         const code = $("mpref").value;
-        const status = $("mstatus"),
+        const count = $("mcount"),
           out = $("mout");
         if (!code) {
-          status.className = "hero idle";
-          status.textContent = "都道府県を選ぶと結果の要約が出ます。";
+          count.textContent = "";
           out.className = "empty";
           out.textContent = "都道府県を選んでください。";
-          $("mcount").textContent = "";
           return;
         }
         const before = fetchCount,
@@ -2130,7 +2138,7 @@
             designatedCity: muniMode,
           });
         } catch (e) {
-          fail(status, out, "cities.json", e);
+          fail(out, count, "cities.json", e);
           return;
         }
         const ms = performance.now() - t0;
@@ -2138,19 +2146,12 @@
         const list = res.municipalities;
         const wards = list.reduce((n, m) => n + (m.ward?.length ?? 0), 0);
         const cities = list.filter((m) => m.ward).length;
-        hero(status, {
-          value: list.length,
-          unit: "市区町村",
-          sub: wards
-            ? `うち政令指定都市の行政区が ${wards}件（${muniMode === "nested" ? `${cities}市にまとめて表示` : "区ごとに1件ずつ表示"}）。`
-            : "この都道府県に政令指定都市はありません。",
-          tags: [
-            { text: `designatedCity "${muniMode}"` },
-            { text: "座標つき", plain: true },
-          ],
-          meta: cost(ms, fetchCount - before),
-        });
-        $("mcount").textContent = `${list.length}件`;
+        summary(count, [
+          `${list.length}件`,
+          wards ? `行政区 ${wards}件` : "政令市なし",
+          muniMode === "nested" ? "市にまとめる" : "区ごとに出す",
+          cost(ms, fetchCount - before),
+        ]);
         mLayer.clearLayers();
         const pts = list.map((m) => [m.lat, m.lng]);
         list.forEach((m, i) => {
@@ -2169,10 +2170,13 @@
 
         out.className = "";
         out.innerHTML = `<table>
-          <thead><tr><th>#</th><th>municipality</th><th>ward</th><th>lat</th><th>lng</th></tr></thead>
+          <thead><tr><th>#</th><th>市区町村</th><th>行政区</th><th>緯度</th><th>経度</th></tr></thead>
           <tbody>${list
             .map(
-              (m, i) => `<tr class="click" data-lat="${m.lat}" data-lng="${m.lng}">
+              (
+                m,
+                i,
+              ) => `<tr class="click" data-lat="${m.lat}" data-lng="${m.lng}">
                 <td class="num">${i + 1}</td>
                 <td class="strong">${esc(m.municipality)}</td>
                 <td class="wide wardtags">${(m.ward ?? []).map((w) => `<span>${esc(w)}</span>`).join("")}</td>
@@ -2183,11 +2187,17 @@
             .join("")}</tbody></table>`;
         out.querySelectorAll("tbody tr").forEach((tr) => {
           tr.addEventListener("click", () => {
-            out.querySelectorAll("tr.sel").forEach((x) => x.classList.remove("sel"));
+            out
+              .querySelectorAll("tr.sel")
+              .forEach((x) => x.classList.remove("sel"));
             tr.classList.add("sel");
-            maps.muni.flyTo([Number(tr.dataset.lat), Number(tr.dataset.lng)], 12, {
-              duration: 0.6,
-            });
+            maps.muni.flyTo(
+              [Number(tr.dataset.lat), Number(tr.dataset.lng)],
+              12,
+              {
+                duration: 0.6,
+              },
+            );
           });
         });
       }
@@ -2223,7 +2233,7 @@
         syncReq("rail");
         const input = text.trim();
         if (!input) return;
-        const status = $("rstatus"),
+        const count = $("rcount"),
           out = $("rout");
         const my = ++rseq,
           before = fetchCount,
@@ -2237,7 +2247,7 @@
         } catch (e) {
           if (my !== rseq) return;
           rLayer.clearLayers();
-          fail(status, out, "rail.json", e);
+          fail(out, count, "rail.json", e);
           return;
         }
         if (my !== rseq) return;
@@ -2246,31 +2256,19 @@
         rLayer.clearLayers();
 
         if (!res.candidate) {
-          heroBad(status, "住所を解決できません", "入力を確認してください");
+          bad(out, count, "住所を解決できません", "入力を確認してください");
           out.className = "empty";
           out.textContent = "候補なし。";
-          $("rcount").textContent = "0";
           return;
         }
         const { candidate: c, stations } = res;
         const top = stations[0];
-        hero(status, {
-          value: top ? `${esc(top.station.name)}` : "駅が見つかりません",
-          unit: top ? `まで ${Math.round(top.distance).toLocaleString()}m` : "",
-          sub: top
-            ? `${esc(top.station.lineName)}（${esc(top.station.company)}） ・ 起点 ${esc(c.address)}`
-            : esc(c.address),
-          tags: [
-            { text: `${stations.length}駅` },
-            { text: `起点 ${esc(c.matchLevel)}/${esc(c.accuracy)}`, plain: true },
-            {
-              text: $("rgroup").checked ? "乗換駅をまとめる" : "路線ごとに表示",
-              plain: true,
-            },
-          ],
-          meta: cost(ms, fetchCount - before),
-        });
-        $("rcount").textContent = `${stations.length}件`;
+        summary(count, [
+          `${stations.length}駅`,
+          $("rgroup").checked ? "乗換駅をまとめる" : "路線ごと",
+          `起点は${LEVEL_JA[c.matchLevel] ?? c.matchLevel}`,
+          cost(ms, fetchCount - before),
+        ]);
 
         const pts = [[c.lat, c.lng]];
         L.circleMarker([c.lat, c.lng], {
@@ -2304,7 +2302,7 @@
 
         out.className = "";
         out.innerHTML = `<table>
-          <thead><tr><th>距離</th><th>駅</th><th>路線</th><th>事業者</th><th>住所</th></tr></thead>
+          <thead><tr><th>距離</th><th>駅</th><th>路線</th><th>事業者</th><th>所在地</th></tr></thead>
           <tbody>${stations
             .map(
               ({ station: s, distance }) => `<tr>
@@ -2328,16 +2326,14 @@
       async function runLines() {
         syncReq("line");
         const code = $("lpref").value;
-        const status = $("lstatus"),
+        const count = $("lcount"),
           out = $("lout");
         lLayer.clearLayers();
         if (!code) {
           $("lline").innerHTML = '<option value="">先に都道府県を選択</option>';
-          status.className = "hero idle";
-          status.textContent = "都道府県を選ぶと路線の一覧が出ます。";
+          count.textContent = "";
           out.className = "empty";
           out.textContent = "都道府県を選んでください。";
-          $("lcount").textContent = "";
           return;
         }
         const before = fetchCount;
@@ -2345,7 +2341,7 @@
         try {
           res = await geo.listLines(code);
         } catch (e) {
-          fail(status, out, "rail.json", e);
+          fail(out, count, "rail.json", e);
           return;
         }
         showCode("listLines()", res);
@@ -2357,22 +2353,15 @@
                 `<option value="${l.code}">${esc(l.name)}（${esc(l.company)}）</option>`,
             )
             .join("");
-        hero(status, {
-          value: res.lines.length,
-          unit: "路線",
-          sub: "この都道府県に駅がある路線です。路線を選ぶと駅が出ます。",
-          tags: [{ text: prefName(code) || "" }],
-          meta: `fetch ${fetchCount - before}回`,
-        });
+        summary(count, [`${res.lines.length}路線`, `fetch ${fetchCount - before}回`]);
         out.className = "empty";
         out.textContent = "路線を選んでください。";
-        $("lcount").textContent = "";
       }
 
       async function runLineStations() {
         syncReq("line");
         const line = Number($("lline").value);
-        const status = $("lstatus"),
+        const count = $("lcount"),
           out = $("lout");
         lLayer.clearLayers();
         if (!line) return;
@@ -2381,25 +2370,17 @@
         try {
           res = await geo.listStations({ pref: $("lpref").value, line });
         } catch (e) {
-          fail(status, out, "rail.json", e);
+          fail(out, count, "rail.json", e);
           return;
         }
         showCode("listStations()", res);
         const list = res.stations;
         const selectedPref = prefName($("lpref").value);
-        hero(status, {
-          value: list.length,
-          unit: "駅",
-          sub: list.length
-            ? `${esc(list[0].lineName)} の ${esc(selectedPref)}内の駅を、路線上の並び順で返しています。`
-            : "この都道府県にこの路線の駅はありません。",
-          tags: [
-            { text: esc(list[0]?.lineName ?? "") },
-            { text: "路線順", plain: true },
-          ],
-          meta: `fetch ${fetchCount - before}回`,
-        });
-        $("lcount").textContent = `${list.length}件`;
+        summary(count, [
+          `${list.length}駅`,
+          "路線順",
+          `fetch ${fetchCount - before}回`,
+        ]);
 
         if (!list.length) {
           out.className = "empty";
@@ -2425,7 +2406,7 @@
 
         out.className = "";
         out.innerHTML = `<table>
-          <thead><tr><th>#</th><th>駅</th><th>郵便番号</th><th>住所</th></tr></thead>
+          <thead><tr><th>#</th><th>駅</th><th>郵便番号</th><th>所在地</th></tr></thead>
           <tbody>${list
             .map(
               (s, i) => `<tr>
