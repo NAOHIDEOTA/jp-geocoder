@@ -662,7 +662,9 @@
         align-items: center;
         flex-wrap: wrap;
         gap: 0.4rem 0.75rem;
-        min-height: 2.4rem;
+        /* 出入りでカードの高さが動かないよう、行の高さを決めておく */
+        height: 2.6rem;
+        min-height: 2.6rem;
         margin-bottom: 0.85rem;
         padding: 0.5rem 0.9rem;
         border: 1px solid var(--line);
@@ -687,8 +689,12 @@
         font-size: 0.76rem;
         font-variant-numeric: tabular-nums;
       }
-      .result.idle {
-        color: var(--muted);
+      /*
+       * 実行前は見せないが場所は取る。display:none にすると結果が出た瞬間に
+       * 表が縮んで揺れる。文言は空状態の1枚だけに保ちたいので visibility で消す。
+       */
+      .result.placeholder {
+        visibility: hidden;
       }
       .result.ng .mark,
       .result.ng .lead2 {
@@ -700,7 +706,8 @@
         flex-direction: column;
         gap: 0.6rem;
         min-width: 0;
-        max-height: 460px;
+        /* 実行前後で背が変わらないよう固定する。中身は card 側でスクロールする */
+        height: 460px;
       }
       .rescol > .card {
         flex: 1;
@@ -722,12 +729,12 @@
         display: grid;
         grid-template-columns: minmax(0, 4fr) minmax(0, 6fr);
         gap: 0.85rem;
-        align-items: start;
+        align-items: stretch;
         margin-bottom: 1rem;
       }
       .split .map {
-        height: 100%;
-        min-height: 320px;
+        height: auto;
+        min-height: 0;
         margin: 0;
       }
       .split > .card {
@@ -744,7 +751,10 @@
           grid-template-columns: minmax(0, 1fr);
         }
         .split .map {
-          min-height: 280px;
+          height: 280px;
+        }
+        .rescol {
+          height: 420px;
         }
       }
 
@@ -926,10 +936,14 @@
           <div class="split">
             <div class="map" id="gmap"></div>
             <div class="rescol">
-              <div class="result" id="gresult" hidden></div>
+              <div class="result placeholder" id="gresult"></div>
               <div class="card">
-                <div class="scroll"><div id="gout" class="empty">
-                  <span class="ico">📍</span>住所を入力すると、ここに結果が出ます</div></div>
+                <div class="scroll">
+                  <div id="gout" class="empty">
+                    <span class="ico">📍</span
+                    >住所を入力すると、ここに結果が出ます
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -1114,10 +1128,14 @@
           <div class="split">
             <div class="map" id="pmap"></div>
             <div class="rescol">
-              <div class="result" id="presult" hidden></div>
+              <div class="result placeholder" id="presult"></div>
               <div class="card">
-                <div class="scroll"><div id="pout" class="empty">
-                  <span class="ico">🗾</span>「実行する」を押すと、ここに結果が出ます</div></div>
+                <div class="scroll">
+                  <div id="pout" class="empty">
+                    <span class="ico">🗾</span
+                    >「実行する」を押すと、ここに結果が出ます
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -1242,10 +1260,14 @@
           <div class="split">
             <div class="map" id="mmap"></div>
             <div class="rescol">
-              <div class="result" id="mresult" hidden></div>
+              <div class="result placeholder" id="mresult"></div>
               <div class="card">
-                <div class="scroll"><div id="mout" class="empty">
-                  <span class="ico">🏙</span>都道府県を選ぶと、ここに結果が出ます</div></div>
+                <div class="scroll">
+                  <div id="mout" class="empty">
+                    <span class="ico">🏙</span
+                    >都道府県を選ぶと、ここに結果が出ます
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -1388,10 +1410,14 @@
           <div class="split">
             <div class="map" id="rmap"></div>
             <div class="rescol">
-              <div class="result" id="rresult" hidden></div>
+              <div class="result placeholder" id="rresult"></div>
               <div class="card">
-                <div class="scroll"><div id="rout" class="empty">
-                  <span class="ico">🚉</span>住所を入力すると、ここに結果が出ます</div></div>
+                <div class="scroll">
+                  <div id="rout" class="empty">
+                    <span class="ico">🚉</span
+                    >住所を入力すると、ここに結果が出ます
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -1604,10 +1630,14 @@
           <div class="split">
             <div class="map" id="lmap"></div>
             <div class="rescol">
-              <div class="result" id="lresult" hidden></div>
+              <div class="result placeholder" id="lresult"></div>
               <div class="card">
-                <div class="scroll"><div id="lout" class="empty">
-                  <span class="ico">🚃</span>都道府県と路線を選ぶと、ここに結果が出ます</div></div>
+                <div class="scroll">
+                  <div id="lout" class="empty">
+                    <span class="ico">🚃</span
+                    >都道府県と路線を選ぶと、ここに結果が出ます
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -1879,7 +1909,6 @@
        * 中身そのものは隣の表と地図が見せるので、ここでは繰り返さない。
        */
       function result(el, { lead, conds = [], cost = "" }) {
-        el.hidden = false;
         el.className = "result";
         el.innerHTML =
           `<span class="mark">✓</span><span class="lead2">${lead}</span>` +
@@ -1891,7 +1920,8 @@
       }
       /** 実行前・結果なしの表示。塗りつぶした1枚にまとめる */
       function empty(outEl, resEl, ico, text, ng = false) {
-        resEl.hidden = true;
+        resEl.className = "result placeholder";
+        resEl.textContent = "";
         outEl.className = ng ? "empty ng" : "empty";
         outEl.innerHTML = `<span class="ico">${ico}</span>${text}`;
       }
