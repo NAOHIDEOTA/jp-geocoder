@@ -101,6 +101,16 @@
         padding: 1.5rem 1rem;
         border-right: 1px solid var(--line);
         background: var(--bg-soft);
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        gap: 1.5rem;
+        .sidebar-top {
+          border-bottom: 1px solid var(--line);
+        }
+        .sidebar-middle {
+          flex: 1;
+        }
       }
       .main {
         min-width: 0;
@@ -470,6 +480,8 @@
 
       /* 凡例 */
       .legend {
+        border: 1px solid var(--line);
+        border-radius: 9px;
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
         gap: 0.3rem 1rem;
@@ -786,13 +798,39 @@
       .refbox[open] > summary {
         border-bottom: 1px solid var(--line);
       }
-      .refbox .card {
-        border: 0;
-        border-radius: 0;
-        margin: 0;
+      /* 見出しと表を分ける。見出しは表の一部ではなく段落の頭として扱う */
+      .refsec {
+        padding: 1.1rem 1.1rem 0;
       }
-      .refbox .card + .card {
-        border-top: 1px solid var(--line);
+      .refsec:last-child {
+        padding-bottom: 1.2rem;
+      }
+      .refh {
+        margin: 0 0 0.7rem;
+        padding-bottom: 0.3rem;
+        border-bottom: 2px solid var(--accent);
+        font-size: 1rem;
+        font-weight: 700;
+        display: inline-block;
+      }
+      .refsub {
+        margin: 1.1rem 0 0.4rem;
+        font-size: 0.78rem;
+        font-weight: 700;
+        color: var(--muted);
+        font-family:
+          ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+      }
+      .refsub:first-of-type {
+        margin-top: 0;
+      }
+      .reftable {
+        border: 1px solid var(--line);
+        border-radius: 9px;
+        overflow: hidden;
+      }
+      .reftable + .refsub {
+        margin-top: 1.1rem;
       }
 
       /* ---- 操作するところ ---- */
@@ -870,37 +908,39 @@
     <div class="app">
       <!-- ------------------------------------------------------ サイドバー -->
       <aside class="sidebar">
-        <div class="brand"><span class="dot"></span>jp-geocoder</div>
-        <p class="tagline">
-          日本の住所・駅を扱う JavaScript ライブラリ。サーバも DB も API キーも
-          不要で、静的 JSON への fetch だけで動きます。
-        </p>
+        <div class="sidebar-top">
+          <div class="brand"><span class="dot"></span>jp-geocoder</div>
+          <p class="tagline">
+            日本の住所・駅を扱う JavaScript ライブラリ。サーバも DB も API
+            キーも 不要で、静的 JSON への fetch だけで動きます。
+          </p>
+        </div>
 
-        <div class="navgroup">住所</div>
-        <button class="navitem on" data-panel="geo">
-          <span class="mono">geocode()</span>
-        </button>
-        <button class="navitem" data-panel="pref">
-          <span class="mono">listPrefectures()</span>
-        </button>
-        <button class="navitem" data-panel="muni">
-          <span class="mono">listMunicipalities()</span>
-        </button>
+        <div class="sidebar-middle">
+          <div class="navgroup">住所</div>
+          <button class="navitem on" data-panel="geo">
+            <span class="mono">geocode()</span>
+          </button>
+          <button class="navitem" data-panel="pref">
+            <span class="mono">listPrefectures()</span>
+          </button>
+          <button class="navitem" data-panel="muni">
+            <span class="mono">listMunicipalities()</span>
+          </button>
 
-        <div class="navgroup">駅・路線</div>
-        <button class="navitem" data-panel="rail">
-          <span class="mono">nearestStationsByAddress()</span>
-        </button>
-        <button class="navitem" data-panel="line">
-          <span class="mono">listLines() / listStations()</span>
-        </button>
+          <div class="navgroup">駅・路線</div>
+          <button class="navitem" data-panel="rail">
+            <span class="mono">nearestStationsByAddress()</span>
+          </button>
+          <button class="navitem" data-panel="line">
+            <span class="mono">listLines() / listStations()</span>
+          </button>
+        </div>
 
-        <div class="sidefoot">
-          出典: デジタル庁「アドレス・ベース・レジストリ」/
-          国土交通省「位置参照情報」/
-          『歴史的行政区域データセットβ版』（CODH作成）/ 駅データ.jp<br />
-          地図 © OpenStreetMap contributors<br />
-          <a href="https://github.com/NAOHIDEOTA/jp-geocoder">GitHub</a>
+        <div class="sidebar-bottom">
+          <div class="sidefoot">
+            <a href="https://github.com/NAOHIDEOTA/jp-geocoder">GitHub</a>
+          </div>
         </div>
       </aside>
 
@@ -950,9 +990,10 @@
 
           <details class="refbox">
             <summary>引数・レスポンス・読み方</summary>
-            <div class="card">
-              <div class="cardhead">引数</div>
-              <table class="ref">
+            
+            <section class="refsec">
+              <h3 class="refh">引数</h3>
+              <div class="reftable"><table class="ref">
                 <thead>
                   <tr>
                     <th>名前</th>
@@ -971,12 +1012,14 @@
                     </td>
                   </tr>
                 </tbody>
-              </table>
-            </div>
-            <div class="card">
-              <div class="cardhead">レスポンス</div>
-              <div class="sub">GeocodeResult</div>
-              <table class="ref">
+              </table></div>
+                        </section>
+
+            
+            <section class="refsec">
+              <h3 class="refh">レスポンス</h3>
+              <h4 class="refsub">GeocodeResult</h4>
+              <div class="reftable"><table class="ref">
                 <thead>
                   <tr>
                     <th>名前</th>
@@ -999,9 +1042,9 @@
                     <td class="desc">出典表示。表示義務があります。</td>
                   </tr>
                 </tbody>
-              </table>
-              <div class="sub">Candidate</div>
-              <table class="ref">
+              </table></div>
+              <h4 class="refsub">Candidate</h4>
+              <div class="reftable"><table class="ref">
                 <thead>
                   <tr>
                     <th>名前</th>
@@ -1077,10 +1120,12 @@
                     </td>
                   </tr>
                 </tbody>
-              </table>
-            </div>
-            <div class="card">
-              <div class="cardhead">読み方</div>
+              </table></div>
+                        </section>
+
+            
+            <section class="refsec">
+              <h3 class="refh">読み方</h3>
               <div class="legend">
                 <span class="lt">matchLevel — どこまで解決できたか</span>
                 <span
@@ -1102,7 +1147,8 @@
                   ><code>representative</code> 代表点。目的地の点ではない</span
                 >
               </div>
-            </div>
+                        </section>
+
           </details>
         </section>
 
@@ -1142,9 +1188,10 @@
 
           <details class="refbox">
             <summary>引数・レスポンス</summary>
-            <div class="card">
-              <div class="cardhead">引数</div>
-              <table class="ref">
+            
+            <section class="refsec">
+              <h3 class="refh">引数</h3>
+              <div class="reftable"><table class="ref">
                 <thead>
                   <tr>
                     <th>名前</th>
@@ -1161,13 +1208,15 @@
                     <td class="desc">引数はありません。</td>
                   </tr>
                 </tbody>
-              </table>
-            </div>
+              </table></div>
+                        </section>
 
-            <div class="card">
-              <div class="cardhead">レスポンス</div>
-              <div class="sub">PrefecturesResult</div>
-              <table class="ref">
+
+            
+            <section class="refsec">
+              <h3 class="refh">レスポンス</h3>
+              <h4 class="refsub">PrefecturesResult</h4>
+              <div class="reftable"><table class="ref">
                 <thead>
                   <tr>
                     <th>名前</th>
@@ -1190,9 +1239,9 @@
                     <td class="desc">出典表示。</td>
                   </tr>
                 </tbody>
-              </table>
-              <div class="sub">Prefecture</div>
-              <table class="ref">
+              </table></div>
+              <h4 class="refsub">Prefecture</h4>
+              <div class="reftable"><table class="ref">
                 <thead>
                   <tr>
                     <th>名前</th>
@@ -1221,8 +1270,9 @@
                     <td class="desc">代表点の緯度経度。</td>
                   </tr>
                 </tbody>
-              </table>
-            </div>
+              </table></div>
+                        </section>
+
           </details>
         </section>
 
@@ -1274,9 +1324,10 @@
 
           <details class="refbox">
             <summary>引数・レスポンス</summary>
-            <div class="card">
-              <div class="cardhead">引数</div>
-              <table class="ref">
+            
+            <section class="refsec">
+              <h3 class="refh">引数</h3>
+              <div class="reftable"><table class="ref">
                 <thead>
                   <tr>
                     <th>名前</th>
@@ -1302,12 +1353,14 @@
                     <td class="desc">政令指定都市20市の行政区の並べ方。</td>
                   </tr>
                 </tbody>
-              </table>
-            </div>
-            <div class="card">
-              <div class="cardhead">レスポンス</div>
-              <div class="sub">MunicipalitiesResult</div>
-              <table class="ref">
+              </table></div>
+                        </section>
+
+            
+            <section class="refsec">
+              <h3 class="refh">レスポンス</h3>
+              <h4 class="refsub">MunicipalitiesResult</h4>
+              <div class="reftable"><table class="ref">
                 <thead>
                   <tr>
                     <th>名前</th>
@@ -1330,9 +1383,9 @@
                     <td class="desc">出典表示。</td>
                   </tr>
                 </tbody>
-              </table>
-              <div class="sub">Municipality</div>
-              <table class="ref">
+              </table></div>
+              <h4 class="refsub">Municipality</h4>
+              <div class="reftable"><table class="ref">
                 <thead>
                   <tr>
                     <th>名前</th>
@@ -1369,8 +1422,9 @@
                     </td>
                   </tr>
                 </tbody>
-              </table>
-            </div>
+              </table></div>
+                        </section>
+
           </details>
         </section>
 
@@ -1424,9 +1478,10 @@
 
           <details class="refbox">
             <summary>引数・レスポンス</summary>
-            <div class="card">
-              <div class="cardhead">引数</div>
-              <table class="ref">
+            
+            <section class="refsec">
+              <h3 class="refh">引数</h3>
+              <div class="reftable"><table class="ref">
                 <thead>
                   <tr>
                     <th>名前</th>
@@ -1466,11 +1521,13 @@
                     <td class="desc">この距離[m]より遠い駅を返しません。</td>
                   </tr>
                 </tbody>
-              </table>
-            </div>
-            <div class="card">
-              <div class="cardhead">レスポンス</div>
-              <table class="ref">
+              </table></div>
+                        </section>
+
+            
+            <section class="refsec">
+              <h3 class="refh">レスポンス</h3>
+              <div class="reftable"><table class="ref">
                 <thead>
                   <tr>
                     <th>名前</th>
@@ -1501,9 +1558,9 @@
                     <td class="desc">出典表示。</td>
                   </tr>
                 </tbody>
-              </table>
-              <div class="sub">NearbyStation</div>
-              <table class="ref">
+              </table></div>
+              <h4 class="refsub">NearbyStation</h4>
+              <div class="reftable"><table class="ref">
                 <thead>
                   <tr>
                     <th>名前</th>
@@ -1528,9 +1585,9 @@
                     </td>
                   </tr>
                 </tbody>
-              </table>
-              <div class="sub">Station</div>
-              <table class="ref">
+              </table></div>
+              <h4 class="refsub">Station</h4>
+              <div class="reftable"><table class="ref">
                 <thead>
                   <tr>
                     <th>名前</th>
@@ -1597,8 +1654,9 @@
                     <td class="desc">緯度経度。</td>
                   </tr>
                 </tbody>
-              </table>
-            </div>
+              </table></div>
+                        </section>
+
           </details>
         </section>
 
@@ -1644,10 +1702,11 @@
 
           <details class="refbox">
             <summary>引数・レスポンス</summary>
-            <div class="card">
-              <div class="cardhead">引数</div>
-              <div class="sub">listLines(pref)</div>
-              <table class="ref">
+            
+            <section class="refsec">
+              <h3 class="refh">引数</h3>
+              <h4 class="refsub">listLines(pref)</h4>
+              <div class="reftable"><table class="ref">
                 <thead>
                   <tr>
                     <th>名前</th>
@@ -1666,9 +1725,9 @@
                     </td>
                   </tr>
                 </tbody>
-              </table>
-              <div class="sub">listStations(query?)</div>
-              <table class="ref">
+              </table></div>
+              <h4 class="refsub">listStations(query?)</h4>
+              <div class="reftable"><table class="ref">
                 <thead>
                   <tr>
                     <th>名前</th>
@@ -1691,12 +1750,14 @@
                     <td class="desc">路線コードで絞り込み。</td>
                   </tr>
                 </tbody>
-              </table>
-            </div>
-            <div class="card">
-              <div class="cardhead">レスポンス</div>
-              <div class="sub">LinesResult</div>
-              <table class="ref">
+              </table></div>
+                        </section>
+
+            
+            <section class="refsec">
+              <h3 class="refh">レスポンス</h3>
+              <h4 class="refsub">LinesResult</h4>
+              <div class="reftable"><table class="ref">
                 <thead>
                   <tr>
                     <th>名前</th>
@@ -1719,9 +1780,9 @@
                     <td class="desc">出典表示。</td>
                   </tr>
                 </tbody>
-              </table>
-              <div class="sub">Line</div>
-              <table class="ref">
+              </table></div>
+              <h4 class="refsub">Line</h4>
+              <div class="reftable"><table class="ref">
                 <thead>
                   <tr>
                     <th>名前</th>
@@ -1750,9 +1811,9 @@
                     <td class="desc">事業者名。</td>
                   </tr>
                 </tbody>
-              </table>
-              <div class="sub">StationsResult</div>
-              <table class="ref">
+              </table></div>
+              <h4 class="refsub">StationsResult</h4>
+              <div class="reftable"><table class="ref">
                 <thead>
                   <tr>
                     <th>名前</th>
@@ -1775,8 +1836,9 @@
                     <td class="desc">出典表示。</td>
                   </tr>
                 </tbody>
-              </table>
-            </div>
+              </table></div>
+                        </section>
+
           </details>
         </section>
       </main>
