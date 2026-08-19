@@ -104,6 +104,13 @@ export interface Municipality {
   municipality: string;
   /** 政令指定都市の行政区。政令市以外では省略される */
   ward?: string[];
+  /**
+   * 代表点の緯度。この1件が指す団体のもの。
+   * designatedCity が "wards" なら行政区（横浜市鶴見区）、
+   * "nested" なら市そのもの（横浜市）の代表点になる。
+   */
+  lat: number;
+  lng: number;
 }
 
 export interface MunicipalityOptions {

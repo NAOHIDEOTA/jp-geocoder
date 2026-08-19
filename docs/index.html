@@ -967,6 +967,7 @@
           </p>
 
           <div class="status" id="mstatus"></div>
+          <div class="map" id="mmap"></div>
 
           <div class="card">
             <div class="cardhead">引数</div>
@@ -1050,6 +1051,16 @@
                   <td class="def">—</td>
                   <td class="desc">
                     政令指定都市の行政区。政令市以外では省略されます。
+                  </td>
+                </tr>
+                <tr>
+                  <td class="name">lat / lng</td>
+                  <td class="type">number</td>
+                  <td class="def">—</td>
+                  <td class="desc">
+                    代表点。この1件が指す団体のものです。<code>wards</code>
+                    なら行政区（横浜市鶴見区）、<code>nested</code>
+                    なら市そのもの（横浜市）の点になります。
                   </td>
                 </tr>
               </tbody>
@@ -1883,6 +1894,9 @@
       }
 
       // =================================================== listMunicipalities
+      maps.muni = makeMap("mmap", [35.44, 139.63], 9);
+      let mLayer = L.layerGroup().addTo(maps.muni);
+
       let muniMode = "wards";
       $("mmode").addEventListener("click", (e) => {
         const b = e.target.closest("button[data-mode]");
@@ -1926,18 +1940,45 @@
           `<span class="pill ok">✓ ${list.length}件</span>` +
           `<span class="meta">行政区 ${wards}件 ・ ${ms.toFixed(0)}ms ・ fetch ${fetchCount - before}回</span>`;
         $("mcount").textContent = `${list.length}件`;
+        mLayer.clearLayers();
+        const pts = list.map((m) => [m.lat, m.lng]);
+        list.forEach((m, i) => {
+          L.circleMarker([m.lat, m.lng], {
+            radius: 5,
+            color: "#bc002d",
+            fillColor: "#bc002d",
+            fillOpacity: 0.75,
+          })
+            .bindPopup(
+              `<b>${esc(m.municipality)}${esc((m.ward ?? []).join("・"))}</b><br>${m.lat}, ${m.lng}`,
+            )
+            .addTo(mLayer);
+        });
+        if (pts.length) maps.muni.fitBounds(L.latLngBounds(pts).pad(0.1));
+
         out.className = "";
         out.innerHTML = `<table>
-          <thead><tr><th>#</th><th>municipality</th><th>ward</th></tr></thead>
+          <thead><tr><th>#</th><th>municipality</th><th>ward</th><th>lat</th><th>lng</th></tr></thead>
           <tbody>${list
             .map(
-              (m, i) => `<tr>
+              (m, i) => `<tr class="click" data-lat="${m.lat}" data-lng="${m.lng}">
                 <td class="num">${i + 1}</td>
                 <td class="strong">${esc(m.municipality)}</td>
                 <td class="wide wardtags">${(m.ward ?? []).map((w) => `<span>${esc(w)}</span>`).join("")}</td>
+                <td class="num mono">${m.lat.toFixed(6)}</td>
+                <td class="num mono">${m.lng.toFixed(6)}</td>
               </tr>`,
             )
             .join("")}</tbody></table>`;
+        out.querySelectorAll("tbody tr").forEach((tr) => {
+          tr.addEventListener("click", () => {
+            out.querySelectorAll("tr.sel").forEach((x) => x.classList.remove("sel"));
+            tr.classList.add("sel");
+            maps.muni.flyTo([Number(tr.dataset.lat), Number(tr.dataset.lng)], 12, {
+              duration: 0.6,
+            });
+          });
+        });
       }
 
       // ============================================ nearestStationsByAddress

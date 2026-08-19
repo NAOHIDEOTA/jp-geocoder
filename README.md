@@ -141,7 +141,7 @@ import { PREFECTURES } from "jp-geocoder";
 
 ```ts
 const { municipalities } = await geocoder.listMunicipalities("神奈川県");
-// [{ municipality: "横浜市", ward: ["鶴見区"] }, … , { municipality: "葉山町" }]
+// [{ municipality: "横浜市", ward: ["鶴見区"], lat: 35.508398, lng: 139.682384 }, …]
 ```
 
 | Option           | Default   | Description                        |
@@ -162,6 +162,8 @@ const { municipalities } = await geocoder.listMunicipalities("神奈川県");
 - 郡名は含めません（「三浦郡葉山町」ではなく `"葉山町"`）
 - 東京23区は市と区に割らず単独で返します（`{municipality:"千代田区"}`）
 - 政令指定都市の本体だけの単独エントリは作りません（必ず `ward` つきで現れます）
+- `lat` / `lng` はその1件が指す団体の代表点です。`wards` なら行政区
+  （横浜市鶴見区）、`nested` なら市そのもの（横浜市）の点になります
 
 ### 駅・路線
 
@@ -288,6 +290,8 @@ interface MunicipalitiesResult {
 interface Municipality {
   municipality: string; // 行政区の場合は市名（"横浜市"）
   ward?: string[]; // 政令指定都市のみ
+  lat: number; // 代表点。この1件が指す団体のもの
+  lng: number;
 }
 
 interface Prefecture {
