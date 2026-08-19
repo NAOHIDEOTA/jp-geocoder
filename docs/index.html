@@ -673,6 +673,9 @@
         <button class="navitem on" data-panel="geo">
           <span class="mono">geocode()</span>
         </button>
+        <button class="navitem" data-panel="pref">
+          <span class="mono">listPrefectures()</span>
+        </button>
         <button class="navitem" data-panel="muni">
           <span class="mono">listMunicipalities()</span>
         </button>
@@ -886,6 +889,46 @@
           </div>
         </section>
 
+        <!-- listPrefectures -->
+        <section id="p-pref" hidden>
+          <div class="phead">
+            <h1>listPrefectures()</h1>
+            <p>
+              都道府県47件を代表点の座標つきで返します。引数はありません。
+              名称だけで足りるなら、fetch の要らない <code>PREFECTURES</code>
+              定数も使えます。
+            </p>
+            <code class="sig"
+              >listPrefectures(): Promise&lt;PrefecturesResult&gt;</code
+            >
+          </div>
+
+          <div class="card">
+            <div class="cardbody">
+              <div class="row">
+                <button class="btn" type="button" id="prun">実行</button>
+                <span class="meta"
+                  >引数はありません。cities.json を1回読むだけです。</span
+                >
+              </div>
+            </div>
+          </div>
+
+          <div class="status" id="pstatus"></div>
+          <div class="map" id="pmap"></div>
+
+          <div class="card">
+            <div class="cardhead"><span>都道府県</span><span id="pcount"></span></div>
+            <div class="scroll">
+              <div id="pout" class="empty">「実行」を押してください。</div>
+            </div>
+          </div>
+
+          <div class="card"><div class="cardhead">引数</div><table class="ref"><thead><tr><th>名前</th><th>型</th><th>既定</th><th>説明</th></tr></thead><tbody><tr><td class="name">—</td><td class="type">—</td><td class="def">—</td><td class="desc">引数はありません。</td></tr></tbody></table></div>
+
+          <div class="card"><div class="cardhead">レスポンス</div><div class="sub">PrefecturesResult</div><table class="ref"><thead><tr><th>名前</th><th>型</th><th>既定</th><th>説明</th></tr></thead><tbody><tr><td class="name">prefectures</td><td class="type">Prefecture[]</td><td class="def">—</td><td class="desc">都道府県コード順。47件。</td></tr><tr><td class="name">attribution</td><td class="type">string[]</td><td class="def">—</td><td class="desc">出典表示。</td></tr></tbody></table><div class="sub">Prefecture</div><table class="ref"><thead><tr><th>名前</th><th>型</th><th>既定</th><th>説明</th></tr></thead><tbody><tr><td class="name">code</td><td class="type">string</td><td class="def">—</td><td class="desc">都道府県コード2桁（"01"〜"47"）。</td></tr><tr><td class="name">name</td><td class="type">string</td><td class="def">—</td><td class="desc">都道府県名。</td></tr><tr><td class="name">lat / lng</td><td class="type">number</td><td class="def">—</td><td class="desc">代表点の緯度経度。</td></tr></tbody></table></div>
+        </section>
+
         <!-- listMunicipalities -->
         <section id="p-muni" hidden>
           <div class="phead">
@@ -1012,7 +1055,6 @@
               </tbody>
             </table>
           </div>
-<div class="card"><div class="cardhead">関連</div><table class="ref"><thead><tr><th>名前</th><th>型</th><th>既定</th><th>説明</th></tr></thead><tbody><tr><td class="name">listPrefectures()</td><td class="type">Promise&lt;PrefecturesResult&gt;</td><td class="def">—</td><td class="desc">都道府県47件を代表点の座標つきで返します。名称だけで足りるなら fetch の要らない <code>PREFECTURES</code> 定数も使えます。</td></tr></tbody></table></div>
           <div class="card">
             <div class="cardhead">
               <span>市区町村</span><span id="mcount"></span>
@@ -1546,6 +1588,7 @@
         geo: () =>
           HEADER +
           `const { candidates } = await geocoder.geocode(\n  ${lit($("gq").value || "東京都世田谷区太子堂5-5-5")},\n);`,
+        pref: () => HEADER + `const { prefectures } = await geocoder.listPrefectures();`,
         muni: () => {
           const name = prefName($("mpref").value) || "神奈川県";
           return (
@@ -1575,7 +1618,7 @@
       }
 
       // ---------------------------------------------------------- 画面切替
-      const PANELS = ["geo", "muni", "rail", "line"];
+      const PANELS = ["geo", "pref", "muni", "rail", "line"];
       const maps = {};
       document.querySelectorAll(".navitem").forEach((btn) => {
         btn.addEventListener("click", () => {
@@ -1587,6 +1630,7 @@
           // 隠れている間にサイズが変わるので測り直す
           maps[target]?.invalidateSize();
           syncReq(target);
+          if (target === "pref" && !$("pout").dataset.done) runPref();
           if (target === "muni" && !$("mpref").value) {
             $("mpref").value = "14";
             runMuni();
@@ -1775,6 +1819,68 @@
         clearTimeout(gtimer);
         runGeo($("gq").value);
       });
+
+      // ===================================================== listPrefectures
+      maps.pref = makeMap("pmap", [36.5, 137.5], 4);
+      let pLayer = L.layerGroup().addTo(maps.pref);
+
+      $("prun").addEventListener("click", runPref);
+
+      async function runPref() {
+        syncReq("pref");
+        const status = $("pstatus"), out = $("pout");
+        const before = fetchCount, t0 = performance.now();
+        let res;
+        try {
+          res = await geo.listPrefectures();
+        } catch (e) {
+          fail(status, out, "cities.json", e);
+          return;
+        }
+        const ms = performance.now() - t0;
+        showCode("listPrefectures()", res);
+        const list = res.prefectures;
+        status.innerHTML =
+          `<span class="pill ok">✓ ${list.length}件</span>` +
+          `<span class="meta">${ms.toFixed(0)}ms ・ fetch ${fetchCount - before}回</span>`;
+        $("pcount").textContent = `${list.length}件`;
+
+        pLayer.clearLayers();
+        for (const p of list) {
+          L.circleMarker([p.lat, p.lng], {
+            radius: 5,
+            color: "#bc002d",
+            fillColor: "#bc002d",
+            fillOpacity: 0.75,
+          })
+            .bindPopup(`<b>${esc(p.name)}</b><br>${p.lat}, ${p.lng}`)
+            .addTo(pLayer);
+        }
+
+        out.dataset.done = "1";
+        out.className = "";
+        out.innerHTML = `<table>
+          <thead><tr><th>code</th><th>name</th><th>lat</th><th>lng</th></tr></thead>
+          <tbody>${list
+            .map(
+              (p) => `<tr class="click" data-lat="${p.lat}" data-lng="${p.lng}">
+                <td class="mono">${esc(p.code)}</td>
+                <td class="strong">${esc(p.name)}</td>
+                <td class="num mono">${p.lat.toFixed(6)}</td>
+                <td class="num mono">${p.lng.toFixed(6)}</td>
+              </tr>`,
+            )
+            .join("")}</tbody></table>`;
+        out.querySelectorAll("tbody tr").forEach((tr) => {
+          tr.addEventListener("click", () => {
+            out.querySelectorAll("tr.sel").forEach((x) => x.classList.remove("sel"));
+            tr.classList.add("sel");
+            maps.pref.flyTo([Number(tr.dataset.lat), Number(tr.dataset.lng)], 9, {
+              duration: 0.6,
+            });
+          });
+        });
+      }
 
       // =================================================== listMunicipalities
       let muniMode = "wards";
