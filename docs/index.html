@@ -184,13 +184,13 @@
       }
       .phead h1 {
         margin: 0;
-        font-size: 1.6rem;
+        font-size: 2rem;
         font-weight: 700;
         letter-spacing: -0.02em;
       }
       .phead p {
         margin: 0.45rem 0 0.9rem;
-        color: var(--muted);
+        color: var(--muted) !important;
         font-size: 0.92rem;
         max-width: 62ch;
       }
@@ -634,6 +634,44 @@
         color: #5d6577;
       }
 
+      /* ---- 実行結果の一行。表とは別に置く ---- */
+      .result {
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 0.4rem 0.75rem;
+        min-height: 2.4rem;
+        margin-bottom: 0.85rem;
+        padding: 0.5rem 0.9rem;
+        border: 1px solid var(--line);
+        border-radius: 9px;
+        background: var(--bg-soft);
+        font-size: 0.83rem;
+      }
+      .result .mark {
+        font-weight: 700;
+        color: var(--accent);
+      }
+      .result .lead2 {
+        font-weight: 700;
+        font-size: 0.95rem;
+      }
+      .result .cond {
+        color: var(--muted);
+      }
+      .result .cost {
+        margin-left: auto;
+        color: var(--muted);
+        font-size: 0.76rem;
+        font-variant-numeric: tabular-nums;
+      }
+      .result.idle {
+        color: var(--muted);
+      }
+      .result.ng .mark,
+      .result.ng .lead2 {
+        color: var(--err);
+      }
 
       /* ---- 地図と結果を横に並べる ---- */
       .split {
@@ -705,33 +743,77 @@
 
       /* ---- 操作するところ ---- */
       .console {
-        border: 1px solid var(--line);
-        border-top: 3px solid var(--accent);
-        border-radius: 11px;
-        background: var(--bg-elev);
-        padding: 1rem 1.1rem 1.1rem;
+        border: 0;
+        border-radius: 12px;
+        padding: 1.05rem 1.15rem 1.15rem;
         margin-bottom: 1rem;
+        /* 単色だと重いので、紅から少し明るい方へ流して和らげる */
+        background: linear-gradient(
+          135deg,
+          #bc002d 0%,
+          #d6394f 55%,
+          #e0596a 100%
+        );
+        color: #fff;
+      }
+      @media (prefers-color-scheme: dark) {
+        .console {
+          background: linear-gradient(
+            135deg,
+            #8c0022 0%,
+            #a92a41 55%,
+            #bf4557 100%
+          );
+        }
       }
       .clabel {
         display: block;
-        margin-bottom: 0.5rem;
-        font-size: 0.78rem;
+        margin-bottom: 0.55rem;
+        font-size: 0.8rem;
         font-weight: 700;
-        color: var(--accent);
+        color: #fff;
       }
       .console input[type="search"],
       .console select {
         padding: 0.72rem 0.85rem;
         font-size: 1rem;
+        border: 0;
+        background: #fff;
+        color: #10141c;
+      }
+      .console input[type="search"]:focus,
+      .console select:focus {
+        outline: 2px solid rgba(255, 255, 255, 0.85);
+        outline-offset: 1px;
       }
       .console .btn {
         padding: 0.72rem 1.4rem;
         font-size: 0.95rem;
+        background: rgba(255, 255, 255, 0.16);
+        border: 1px solid rgba(255, 255, 255, 0.5);
+        color: #fff;
+      }
+      .console .btn:hover {
+        background: rgba(255, 255, 255, 0.26);
+      }
+      .console .chip {
+        background: rgba(255, 255, 255, 0.14);
+        border-color: rgba(255, 255, 255, 0.35);
+        color: #fff;
+      }
+      .console .chip:hover {
+        background: rgba(255, 255, 255, 0.26);
+        border-color: #fff;
+        color: #fff;
+      }
+      .console .check,
+      .console .meta {
+        color: rgba(255, 255, 255, 0.88);
       }
       .hint2 {
         margin: 0.6rem 0 0;
         font-size: 0.76rem;
-        color: var(--muted);
+        color: rgba(255, 255, 255, 0.85);
       }
       .phead p {
         font-size: 1rem;
@@ -784,7 +866,9 @@
         <section id="p-geo">
           <div class="phead">
             <h1>geocode()</h1>
-            <p>住所を緯度経度にします。表記ゆれ・タイポ・旧市町村名も解決します。</p>
+            <p>
+              住所を緯度経度にします。表記ゆれ・タイポ・旧市町村名も解決します。
+            </p>
             <code class="sig"
               >geocode(address: string): Promise&lt;GeocodeResult&gt;</code
             >
@@ -805,11 +889,12 @@
               <div class="chips" id="gsamples"></div>
             </div>
           </div>
+          <div class="result idle" id="gresult">まだ実行していません。</div>
           <div class="split">
             <div class="map" id="gmap"></div>
             <div class="card">
               <div class="cardhead">
-                <span>候補</span><span id="gcount"></span>
+                <span>候補</span>
               </div>
               <div class="scroll">
                 <div id="gout" class="empty">住所を入力してください。</div>
@@ -994,11 +1079,12 @@
               </div>
             </div>
           </div>
+          <div class="result idle" id="presult">まだ実行していません。</div>
           <div class="split">
             <div class="map" id="pmap"></div>
             <div class="card">
               <div class="cardhead">
-                <span>都道府県</span><span id="pcount"></span>
+                <span>都道府県</span>
               </div>
               <div class="scroll">
                 <div id="pout" class="empty">「実行」を押してください。</div>
@@ -1123,11 +1209,12 @@
             は行政区ごとに1件（横浜市なら18件）、<code>nested</code>
             は市1件に区をまとめます。郡名は含めません。
           </p>
+          <div class="result idle" id="mresult">まだ実行していません。</div>
           <div class="split">
             <div class="map" id="mmap"></div>
             <div class="card">
               <div class="cardhead">
-                <span>市区町村</span><span id="mcount"></span>
+                <span>市区町村</span>
               </div>
               <div class="scroll">
                 <div id="mout" class="empty">都道府県を選んでください。</div>
@@ -1270,11 +1357,12 @@
               </div>
             </div>
           </div>
+          <div class="result idle" id="rresult">まだ実行していません。</div>
           <div class="split">
             <div class="map" id="rmap"></div>
             <div class="card">
               <div class="cardhead">
-                <span>最寄り駅</span><span id="rcount"></span>
+                <span>最寄り駅</span>
               </div>
               <div class="scroll">
                 <div id="rout" class="empty">住所を入力してください。</div>
@@ -1487,11 +1575,12 @@
           <p class="note">
             駅は路線順に並びます。分岐のある路線だけ、分岐箇所で順序が飛びます。
           </p>
+          <div class="result idle" id="lresult">まだ実行していません。</div>
           <div class="split">
             <div class="map" id="lmap"></div>
             <div class="card">
               <div class="cardhead">
-                <span>駅</span><span id="lcount"></span>
+                <span>駅</span>
               </div>
               <div class="scroll">
                 <div id="lout" class="empty">都道府県を選んでください。</div>
@@ -1762,15 +1851,23 @@
       }
 
       /**
-       * 結果カードの見出しに出す要約。件数・条件・所要時間だけを並べる。
+       * 実行結果の一行。表の外に置き、件数と条件、右端に所要時間を出す。
        * 中身そのものは隣の表と地図が見せるので、ここでは繰り返さない。
        */
-      function summary(el, parts) {
-        el.innerHTML = parts.filter(Boolean).join(" ・ ");
+      function result(el, { lead, conds = [], cost = "" }) {
+        el.className = "result";
+        el.innerHTML =
+          `<span class="mark">✓</span><span class="lead2">${lead}</span>` +
+          conds
+            .filter(Boolean)
+            .map((c) => `<span class="cond">${c}</span>`)
+            .join("") +
+          (cost ? `<span class="cost">${cost}</span>` : "");
       }
-      /** 失敗はその場（結果の表示領域）に出す */
-      function bad(outEl, countEl, text, detail = "") {
-        countEl.innerHTML = `<span class="ng">✕ ${text}</span>`;
+      /** 失敗も同じ場所に出す。表側には理由を書く */
+      function bad(outEl, resEl, text, detail = "") {
+        resEl.className = "result ng";
+        resEl.innerHTML = `<span class="mark">✕</span><span class="lead2">${text}</span>`;
         outEl.className = "empty";
         outEl.textContent = detail || text;
       }
@@ -1954,10 +2051,11 @@
       async function runGeo(text) {
         syncReq("geo");
         const input = text.trim();
-        const count = $("gcount"),
+        const res2 = $("gresult"),
           out = $("gout");
         if (!input) {
-          count.textContent = "";
+          res2.className = "result idle";
+          res2.textContent = "まだ実行していません。";
           out.className = "empty";
           out.textContent = "住所を入力してください。";
           return;
@@ -1970,7 +2068,7 @@
           res = await geo.geocode(input);
         } catch (e) {
           if (my !== gseq) return;
-          fail(out, count, "配信データ", e);
+          fail(out, res2, "配信データ", e);
           return;
         }
         if (my !== gseq) return;
@@ -1979,18 +2077,20 @@
 
         const c = res.candidates[0];
         if (!c) {
-          bad(out, count, "住所を解決できません", "入力を確認してください");
+          bad(out, res2, "住所を解決できません", "入力を確認してください");
           out.className = "empty";
           out.textContent = "候補なし。";
           return;
         }
-        summary(count, [
-          `候補 ${res.candidates.length}件`,
-          LEVEL_JA[c.matchLevel] ?? c.matchLevel,
-          ACC_JA[c.accuracy] ?? c.accuracy,
-          `一致率 ${Math.round(c.score * 100)}%`,
-          cost(ms, fetchCount - before),
-        ]);
+        result(res2, {
+          lead: `候補 ${res.candidates.length}件`,
+          conds: [
+            LEVEL_JA[c.matchLevel] ?? c.matchLevel,
+            ACC_JA[c.accuracy] ?? c.accuracy,
+            `一致率 ${Math.round(c.score * 100)}%`,
+          ],
+          cost: cost(ms, fetchCount - before),
+        });
         pin(c);
 
         out.className = "";
@@ -2040,7 +2140,7 @@
 
       async function runPref() {
         syncReq("pref");
-        const count = $("pcount"),
+        const res2 = $("presult"),
           out = $("pout");
         const before = fetchCount,
           t0 = performance.now();
@@ -2048,17 +2148,17 @@
         try {
           res = await geo.listPrefectures();
         } catch (e) {
-          fail(out, count, "cities.json", e);
+          fail(out, res2, "cities.json", e);
           return;
         }
         const ms = performance.now() - t0;
         showCode("listPrefectures()", res);
         const list = res.prefectures;
-        summary(count, [
-          `${list.length}件`,
-          "緯度経度つき",
-          cost(ms, fetchCount - before),
-        ]);
+        result(res2, {
+          lead: `${list.length}件`,
+          conds: ["緯度経度つき"],
+          cost: cost(ms, fetchCount - before),
+        });
 
         pLayer.clearLayers();
         for (const p of list) {
@@ -2122,10 +2222,11 @@
       async function runMuni() {
         syncReq("muni");
         const code = $("mpref").value;
-        const count = $("mcount"),
+        const res2 = $("mresult"),
           out = $("mout");
         if (!code) {
-          count.textContent = "";
+          res2.className = "result idle";
+          res2.textContent = "まだ実行していません。";
           out.className = "empty";
           out.textContent = "都道府県を選んでください。";
           return;
@@ -2138,7 +2239,7 @@
             designatedCity: muniMode,
           });
         } catch (e) {
-          fail(out, count, "cities.json", e);
+          fail(out, res2, "cities.json", e);
           return;
         }
         const ms = performance.now() - t0;
@@ -2146,12 +2247,14 @@
         const list = res.municipalities;
         const wards = list.reduce((n, m) => n + (m.ward?.length ?? 0), 0);
         const cities = list.filter((m) => m.ward).length;
-        summary(count, [
-          `${list.length}件`,
-          wards ? `行政区 ${wards}件` : "政令市なし",
-          muniMode === "nested" ? "市にまとめる" : "区ごとに出す",
-          cost(ms, fetchCount - before),
-        ]);
+        result(res2, {
+          lead: `${list.length}件`,
+          conds: [
+            wards ? `行政区 ${wards}件` : "政令市なし",
+            muniMode === "nested" ? "市にまとめる" : "区ごとに出す",
+          ],
+          cost: cost(ms, fetchCount - before),
+        });
         mLayer.clearLayers();
         const pts = list.map((m) => [m.lat, m.lng]);
         list.forEach((m, i) => {
@@ -2233,7 +2336,7 @@
         syncReq("rail");
         const input = text.trim();
         if (!input) return;
-        const count = $("rcount"),
+        const res2 = $("rresult"),
           out = $("rout");
         const my = ++rseq,
           before = fetchCount,
@@ -2247,7 +2350,7 @@
         } catch (e) {
           if (my !== rseq) return;
           rLayer.clearLayers();
-          fail(out, count, "rail.json", e);
+          fail(out, res2, "rail.json", e);
           return;
         }
         if (my !== rseq) return;
@@ -2256,19 +2359,21 @@
         rLayer.clearLayers();
 
         if (!res.candidate) {
-          bad(out, count, "住所を解決できません", "入力を確認してください");
+          bad(out, res2, "住所を解決できません", "入力を確認してください");
           out.className = "empty";
           out.textContent = "候補なし。";
           return;
         }
         const { candidate: c, stations } = res;
         const top = stations[0];
-        summary(count, [
-          `${stations.length}駅`,
-          $("rgroup").checked ? "乗換駅をまとめる" : "路線ごと",
-          `起点は${LEVEL_JA[c.matchLevel] ?? c.matchLevel}`,
-          cost(ms, fetchCount - before),
-        ]);
+        result(res2, {
+          lead: `${stations.length}駅`,
+          conds: [
+            $("rgroup").checked ? "乗換駅をまとめる" : "路線ごと",
+            `起点は${LEVEL_JA[c.matchLevel] ?? c.matchLevel}`,
+          ],
+          cost: cost(ms, fetchCount - before),
+        });
 
         const pts = [[c.lat, c.lng]];
         L.circleMarker([c.lat, c.lng], {
@@ -2326,12 +2431,13 @@
       async function runLines() {
         syncReq("line");
         const code = $("lpref").value;
-        const count = $("lcount"),
+        const res2 = $("lresult"),
           out = $("lout");
         lLayer.clearLayers();
         if (!code) {
           $("lline").innerHTML = '<option value="">先に都道府県を選択</option>';
-          count.textContent = "";
+          res2.className = "result idle";
+          res2.textContent = "まだ実行していません。";
           out.className = "empty";
           out.textContent = "都道府県を選んでください。";
           return;
@@ -2341,7 +2447,7 @@
         try {
           res = await geo.listLines(code);
         } catch (e) {
-          fail(out, count, "rail.json", e);
+          fail(out, res2, "rail.json", e);
           return;
         }
         showCode("listLines()", res);
@@ -2353,7 +2459,10 @@
                 `<option value="${l.code}">${esc(l.name)}（${esc(l.company)}）</option>`,
             )
             .join("");
-        summary(count, [`${res.lines.length}路線`, `fetch ${fetchCount - before}回`]);
+        result(res2, {
+          lead: `${res.lines.length}路線`,
+          cost: `fetch ${fetchCount - before}回`,
+        });
         out.className = "empty";
         out.textContent = "路線を選んでください。";
       }
@@ -2361,7 +2470,7 @@
       async function runLineStations() {
         syncReq("line");
         const line = Number($("lline").value);
-        const count = $("lcount"),
+        const res2 = $("lresult"),
           out = $("lout");
         lLayer.clearLayers();
         if (!line) return;
@@ -2370,17 +2479,17 @@
         try {
           res = await geo.listStations({ pref: $("lpref").value, line });
         } catch (e) {
-          fail(out, count, "rail.json", e);
+          fail(out, res2, "rail.json", e);
           return;
         }
         showCode("listStations()", res);
         const list = res.stations;
         const selectedPref = prefName($("lpref").value);
-        summary(count, [
-          `${list.length}駅`,
-          "路線順",
-          `fetch ${fetchCount - before}回`,
-        ]);
+        result(res2, {
+          lead: `${list.length}駅`,
+          conds: ["路線順"],
+          cost: `fetch ${fetchCount - before}回`,
+        });
 
         if (!list.length) {
           out.className = "empty";
