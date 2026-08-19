@@ -657,6 +657,138 @@
       .cm {
         color: #5d6577;
       }
+
+      /* ---- 実行結果の要約（何が手に入ったか） ---- */
+      .hero {
+        display: block;
+        margin: 0 0 1rem;
+        padding: 1.05rem 1.15rem;
+        border: 1px solid var(--line);
+        border-left: 3px solid var(--accent);
+        border-radius: 11px;
+        background: var(--bg-elev);
+      }
+      .hero.idle {
+        border-left-color: var(--line);
+        color: var(--muted);
+        font-size: 0.86rem;
+        padding: 0.85rem 1.15rem;
+      }
+      .hero.bad {
+        border-left-color: var(--err);
+      }
+      .hval {
+        display: flex;
+        align-items: baseline;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        font-size: 1.5rem;
+        font-weight: 700;
+        letter-spacing: -0.02em;
+        line-height: 1.25;
+      }
+      .hval .unit {
+        font-size: 0.95rem;
+        font-weight: 600;
+        color: var(--muted);
+      }
+      .hero.bad .hval {
+        color: var(--err);
+        font-size: 1.05rem;
+      }
+      .hsub {
+        margin-top: 0.25rem;
+        font-size: 0.9rem;
+        color: var(--fg);
+      }
+      .hmeta {
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 0.35rem 0.6rem;
+        margin-top: 0.6rem;
+      }
+      .htag {
+        padding: 0.1rem 0.5rem;
+        border-radius: 999px;
+        background: var(--accent-soft);
+        color: var(--accent);
+        font-size: 0.73rem;
+        font-weight: 600;
+      }
+      .htag.plain {
+        background: var(--bg-soft);
+        color: var(--muted);
+        border: 1px solid var(--line);
+      }
+
+      /* ---- 地図と結果を横に並べる ---- */
+      .split {
+        display: grid;
+        grid-template-columns: minmax(0, 4fr) minmax(0, 6fr);
+        gap: 0.85rem;
+        align-items: start;
+        margin-bottom: 1rem;
+      }
+      .split .map {
+        height: 100%;
+        min-height: 320px;
+        margin: 0;
+      }
+      .split > .card {
+        margin: 0;
+        max-height: 460px;
+        display: flex;
+        flex-direction: column;
+      }
+      .split > .card .scroll {
+        overflow: auto;
+      }
+      @media (max-width: 1500px) {
+        .split {
+          grid-template-columns: minmax(0, 1fr);
+        }
+        .split .map {
+          min-height: 280px;
+        }
+      }
+
+      /* ---- 引数・レスポンスは畳んでおく ---- */
+      .refbox {
+        border: 1px solid var(--line);
+        border-radius: 11px;
+        background: var(--bg-elev);
+        margin-bottom: 1rem;
+      }
+      .refbox > summary {
+        padding: 0.7rem 0.95rem;
+        cursor: pointer;
+        font-size: 0.8rem;
+        font-weight: 600;
+        color: var(--muted);
+        list-style: none;
+      }
+      .refbox > summary::-webkit-details-marker {
+        display: none;
+      }
+      .refbox > summary::before {
+        content: "▸ ";
+        color: var(--accent);
+      }
+      .refbox[open] > summary::before {
+        content: "▾ ";
+      }
+      .refbox[open] > summary {
+        border-bottom: 1px solid var(--line);
+      }
+      .refbox .card {
+        border: 0;
+        border-radius: 0;
+        margin: 0;
+      }
+      .refbox .card + .card {
+        border-top: 1px solid var(--line);
+      }
     </style>
   </head>
   <body>
@@ -728,10 +860,10 @@
             </div>
           </div>
 
-          <div class="status" id="gstatus"></div>
-          <div class="map" id="gmap"></div>
-
-          <div class="card">
+          <div class="hero idle" id="gstatus">実行するとここに結果の要約が出ます。</div>
+          <div class="split">
+<div class="map" id="gmap"></div>
+<div class="card">
             <div class="cardhead">
               <span>候補</span><span id="gcount"></span>
             </div>
@@ -739,8 +871,13 @@
               <div id="gout" class="empty">住所を入力してください。</div>
             </div>
           </div>
+</div>
 
-          <div class="card">
+
+          
+
+          <details class="refbox"><summary>引数・レスポンス・読み方</summary>
+<div class="card">
             <div class="cardhead">引数</div>
             <table class="ref">
               <thead>
@@ -887,6 +1024,8 @@
               >
             </div>
           </div>
+</details>
+
         </section>
 
         <!-- listPrefectures -->
@@ -914,19 +1053,26 @@
             </div>
           </div>
 
-          <div class="status" id="pstatus"></div>
-          <div class="map" id="pmap"></div>
-
-          <div class="card">
+          <div class="hero idle" id="pstatus">実行するとここに結果の要約が出ます。</div>
+          <div class="split">
+<div class="map" id="pmap"></div>
+<div class="card">
             <div class="cardhead"><span>都道府県</span><span id="pcount"></span></div>
             <div class="scroll">
               <div id="pout" class="empty">「実行」を押してください。</div>
             </div>
           </div>
+</div>
 
-          <div class="card"><div class="cardhead">引数</div><table class="ref"><thead><tr><th>名前</th><th>型</th><th>既定</th><th>説明</th></tr></thead><tbody><tr><td class="name">—</td><td class="type">—</td><td class="def">—</td><td class="desc">引数はありません。</td></tr></tbody></table></div>
+
+          
+
+          <details class="refbox"><summary>引数・レスポンス</summary>
+<div class="card"><div class="cardhead">引数</div><table class="ref"><thead><tr><th>名前</th><th>型</th><th>既定</th><th>説明</th></tr></thead><tbody><tr><td class="name">—</td><td class="type">—</td><td class="def">—</td><td class="desc">引数はありません。</td></tr></tbody></table></div>
 
           <div class="card"><div class="cardhead">レスポンス</div><div class="sub">PrefecturesResult</div><table class="ref"><thead><tr><th>名前</th><th>型</th><th>既定</th><th>説明</th></tr></thead><tbody><tr><td class="name">prefectures</td><td class="type">Prefecture[]</td><td class="def">—</td><td class="desc">都道府県コード順。47件。</td></tr><tr><td class="name">attribution</td><td class="type">string[]</td><td class="def">—</td><td class="desc">出典表示。</td></tr></tbody></table><div class="sub">Prefecture</div><table class="ref"><thead><tr><th>名前</th><th>型</th><th>既定</th><th>説明</th></tr></thead><tbody><tr><td class="name">code</td><td class="type">string</td><td class="def">—</td><td class="desc">都道府県コード2桁（"01"〜"47"）。</td></tr><tr><td class="name">name</td><td class="type">string</td><td class="def">—</td><td class="desc">都道府県名。</td></tr><tr><td class="name">lat / lng</td><td class="type">number</td><td class="def">—</td><td class="desc">代表点の緯度経度。</td></tr></tbody></table></div>
+</details>
+
         </section>
 
         <!-- listMunicipalities -->
@@ -966,10 +1112,22 @@
             郡名は含めません。
           </p>
 
-          <div class="status" id="mstatus"></div>
-          <div class="map" id="mmap"></div>
+          <div class="hero idle" id="mstatus">実行するとここに結果の要約が出ます。</div>
+          <div class="split">
+<div class="map" id="mmap"></div>
+<div class="card">
+            <div class="cardhead">
+              <span>市区町村</span><span id="mcount"></span>
+            </div>
+            <div class="scroll">
+              <div id="mout" class="empty">都道府県を選んでください。</div>
+            </div>
+          </div>
+</div>
 
-          <div class="card">
+
+          <details class="refbox"><summary>引数・レスポンス</summary>
+<div class="card">
             <div class="cardhead">引数</div>
             <table class="ref">
               <thead>
@@ -1066,14 +1224,8 @@
               </tbody>
             </table>
           </div>
-          <div class="card">
-            <div class="cardhead">
-              <span>市区町村</span><span id="mcount"></span>
-            </div>
-            <div class="scroll">
-              <div id="mout" class="empty">都道府県を選んでください。</div>
-            </div>
-          </div>
+</details>
+
         </section>
 
         <!-- nearestStationsByAddress -->
@@ -1112,10 +1264,22 @@
             </div>
           </div>
 
-          <div class="status" id="rstatus"></div>
-          <div class="map" id="rmap"></div>
+          <div class="hero idle" id="rstatus">実行するとここに結果の要約が出ます。</div>
+          <div class="split">
+<div class="map" id="rmap"></div>
+<div class="card">
+            <div class="cardhead">
+              <span>最寄り駅</span><span id="rcount"></span>
+            </div>
+            <div class="scroll">
+              <div id="rout" class="empty">住所を入力してください。</div>
+            </div>
+          </div>
+</div>
 
-          <div class="card">
+
+          <details class="refbox"><summary>引数・レスポンス</summary>
+<div class="card">
             <div class="cardhead">引数</div>
             <table class="ref">
               <thead>
@@ -1288,14 +1452,8 @@
               </tbody>
             </table>
           </div>
-          <div class="card">
-            <div class="cardhead">
-              <span>最寄り駅</span><span id="rcount"></span>
-            </div>
-            <div class="scroll">
-              <div id="rout" class="empty">住所を入力してください。</div>
-            </div>
-          </div>
+</details>
+
         </section>
 
         <!-- listLines / listStations -->
@@ -1326,10 +1484,20 @@
             1本の列に並べられないため、分岐箇所だけ順序が飛びます。
           </p>
 
-          <div class="status" id="lstatus"></div>
-          <div class="map" id="lmap"></div>
+          <div class="hero idle" id="lstatus">実行するとここに結果の要約が出ます。</div>
+          <div class="split">
+<div class="map" id="lmap"></div>
+<div class="card">
+            <div class="cardhead"><span>駅</span><span id="lcount"></span></div>
+            <div class="scroll">
+              <div id="lout" class="empty">都道府県を選んでください。</div>
+            </div>
+          </div>
+</div>
 
-          <div class="card">
+
+          <details class="refbox"><summary>引数・レスポンス</summary>
+<div class="card">
             <div class="cardhead">引数</div>
             <div class="sub">listLines(pref)</div>
             <table class="ref">
@@ -1462,12 +1630,8 @@
               </tbody>
             </table>
           </div>
-          <div class="card">
-            <div class="cardhead"><span>駅</span><span id="lcount"></span></div>
-            <div class="scroll">
-              <div id="lout" class="empty">都道府県を選んでください。</div>
-            </div>
-          </div>
+</details>
+
         </section>
       </main>
 
@@ -1579,12 +1743,35 @@
         codeEl.textContent = String(error?.stack ?? error);
       }
 
+      /**
+       * 実行結果の要約。何が手に入ったのかを最初に見せる。
+       * value を主役にし、補足を sub、条件や所要時間を tags / meta に置く。
+       */
+      function hero(el, { value, unit = "", sub = "", tags = [], meta = "" }) {
+        el.className = "hero";
+        el.innerHTML =
+          `<div class="hval">${value}${unit ? `<span class="unit">${unit}</span>` : ""}</div>` +
+          (sub ? `<div class="hsub">${sub}</div>` : "") +
+          `<div class="hmeta">` +
+          tags
+            .map((t) => `<span class="htag ${t.plain ? "plain" : ""}">${t.text}</span>`)
+            .join("") +
+          (meta ? `<span class="meta">${meta}</span>` : "") +
+          `</div>`;
+      }
+      function heroBad(el, text, detail = "") {
+        el.className = "hero bad";
+        el.innerHTML =
+          `<div class="hval">✕ ${text}</div>` +
+          (detail ? `<div class="hmeta"><span class="meta">${detail}</span></div>` : "");
+      }
+      /** 所要時間と fetch 回数。どの画面でも同じ形で出す */
+      const cost = (ms, n) => `${ms.toFixed(0)}ms ・ fetch ${n}回`;
+
       /** 配信物が取れなかったときの共通表示。黙って何も起きない状態を作らない */
       function fail(statusEl, outEl, file, error) {
         const msg = String(error?.message ?? error);
-        statusEl.innerHTML =
-          `<span class="pill err">✕ ${esc(file)} を読めません</span>` +
-          `<span class="meta">${esc(msg)}</span>`;
+        heroBad(statusEl, `${esc(file)} を読めません`, esc(msg));
         outEl.className = "empty";
         outEl.textContent = /40\d/.test(msg)
           ? `${file} がまだ配信されていません。`
@@ -1757,7 +1944,8 @@
         const status = $("gstatus"),
           out = $("gout");
         if (!input) {
-          status.innerHTML = "";
+          status.className = "hero idle";
+          status.textContent = "住所を入力すると結果の要約が出ます。";
           out.className = "empty";
           out.textContent = "住所を入力してください。";
           $("gcount").textContent = "";
@@ -1780,15 +1968,23 @@
 
         const c = res.candidates[0];
         if (!c) {
-          status.innerHTML = `<span class="pill err">✕ 住所を解決できません</span>`;
+          heroBad(status, "住所を解決できません", "入力を確認してください");
           out.className = "empty";
           out.textContent = "候補なし。";
           $("gcount").textContent = "0";
           return;
         }
-        status.innerHTML =
-          `<span class="pill ok">✓ ${c.lat}, ${c.lng}</span>` +
-          `<span class="meta">${c.matchLevel} / ${c.accuracy} ・ ${ms.toFixed(0)}ms ・ fetch ${fetchCount - before}回</span>`;
+        hero(status, {
+          value: `${c.lat}, ${c.lng}`,
+          sub: esc(c.address),
+          tags: [
+            { text: `matchLevel ${esc(c.matchLevel)}` },
+            { text: `accuracy ${esc(c.accuracy)}` },
+            { text: `score ${c.score}`, plain: true },
+            { text: `候補 ${res.candidates.length}件`, plain: true },
+          ],
+          meta: cost(ms, fetchCount - before),
+        });
         $("gcount").textContent = `${res.candidates.length}件`;
         pin(c);
 
@@ -1851,9 +2047,13 @@
         const ms = performance.now() - t0;
         showCode("listPrefectures()", res);
         const list = res.prefectures;
-        status.innerHTML =
-          `<span class="pill ok">✓ ${list.length}件</span>` +
-          `<span class="meta">${ms.toFixed(0)}ms ・ fetch ${fetchCount - before}回</span>`;
+        hero(status, {
+          value: list.length,
+          unit: "都道府県",
+          sub: "コード・名称・代表点の緯度経度が入っています。",
+          tags: [{ text: "座標つき" }, { text: "コード順", plain: true }],
+          meta: cost(ms, fetchCount - before),
+        });
         $("pcount").textContent = `${list.length}件`;
 
         pLayer.clearLayers();
@@ -1915,7 +2115,8 @@
         const status = $("mstatus"),
           out = $("mout");
         if (!code) {
-          status.innerHTML = "";
+          status.className = "hero idle";
+          status.textContent = "都道府県を選ぶと結果の要約が出ます。";
           out.className = "empty";
           out.textContent = "都道府県を選んでください。";
           $("mcount").textContent = "";
@@ -1936,9 +2137,19 @@
         showCode("listMunicipalities()", res);
         const list = res.municipalities;
         const wards = list.reduce((n, m) => n + (m.ward?.length ?? 0), 0);
-        status.innerHTML =
-          `<span class="pill ok">✓ ${list.length}件</span>` +
-          `<span class="meta">行政区 ${wards}件 ・ ${ms.toFixed(0)}ms ・ fetch ${fetchCount - before}回</span>`;
+        const cities = list.filter((m) => m.ward).length;
+        hero(status, {
+          value: list.length,
+          unit: "市区町村",
+          sub: wards
+            ? `うち政令指定都市の行政区が ${wards}件（${muniMode === "nested" ? `${cities}市にまとめて表示` : "区ごとに1件ずつ表示"}）。`
+            : "この都道府県に政令指定都市はありません。",
+          tags: [
+            { text: `designatedCity "${muniMode}"` },
+            { text: "座標つき", plain: true },
+          ],
+          meta: cost(ms, fetchCount - before),
+        });
         $("mcount").textContent = `${list.length}件`;
         mLayer.clearLayers();
         const pts = list.map((m) => [m.lat, m.lng]);
@@ -2035,16 +2246,30 @@
         rLayer.clearLayers();
 
         if (!res.candidate) {
-          status.innerHTML = `<span class="pill err">✕ 住所を解決できません</span>`;
+          heroBad(status, "住所を解決できません", "入力を確認してください");
           out.className = "empty";
           out.textContent = "候補なし。";
           $("rcount").textContent = "0";
           return;
         }
         const { candidate: c, stations } = res;
-        status.innerHTML =
-          `<span class="pill ok">✓ ${esc(c.address)}</span>` +
-          `<span class="meta">${c.matchLevel} / ${c.accuracy} ・ ${ms.toFixed(0)}ms ・ fetch ${fetchCount - before}回</span>`;
+        const top = stations[0];
+        hero(status, {
+          value: top ? `${esc(top.station.name)}` : "駅が見つかりません",
+          unit: top ? `まで ${Math.round(top.distance).toLocaleString()}m` : "",
+          sub: top
+            ? `${esc(top.station.lineName)}（${esc(top.station.company)}） ・ 起点 ${esc(c.address)}`
+            : esc(c.address),
+          tags: [
+            { text: `${stations.length}駅` },
+            { text: `起点 ${esc(c.matchLevel)}/${esc(c.accuracy)}`, plain: true },
+            {
+              text: $("rgroup").checked ? "乗換駅をまとめる" : "路線ごとに表示",
+              plain: true,
+            },
+          ],
+          meta: cost(ms, fetchCount - before),
+        });
         $("rcount").textContent = `${stations.length}件`;
 
         const pts = [[c.lat, c.lng]];
@@ -2108,6 +2333,8 @@
         lLayer.clearLayers();
         if (!code) {
           $("lline").innerHTML = '<option value="">先に都道府県を選択</option>';
+          status.className = "hero idle";
+          status.textContent = "都道府県を選ぶと路線の一覧が出ます。";
           out.className = "empty";
           out.textContent = "都道府県を選んでください。";
           $("lcount").textContent = "";
@@ -2130,9 +2357,13 @@
                 `<option value="${l.code}">${esc(l.name)}（${esc(l.company)}）</option>`,
             )
             .join("");
-        status.innerHTML =
-          `<span class="pill ok">✓ ${res.lines.length}路線</span>` +
-          `<span class="meta">fetch ${fetchCount - before}回</span>`;
+        hero(status, {
+          value: res.lines.length,
+          unit: "路線",
+          sub: "この都道府県に駅がある路線です。路線を選ぶと駅が出ます。",
+          tags: [{ text: prefName(code) || "" }],
+          meta: `fetch ${fetchCount - before}回`,
+        });
         out.className = "empty";
         out.textContent = "路線を選んでください。";
         $("lcount").textContent = "";
@@ -2156,9 +2387,18 @@
         showCode("listStations()", res);
         const list = res.stations;
         const selectedPref = prefName($("lpref").value);
-        status.innerHTML =
-          `<span class="pill ok">✓ ${list.length}駅</span>` +
-          `<span class="meta">${esc(list[0]?.lineName ?? "")} ・ ${esc(selectedPref)}内 ・ fetch ${fetchCount - before}回</span>`;
+        hero(status, {
+          value: list.length,
+          unit: "駅",
+          sub: list.length
+            ? `${esc(list[0].lineName)} の ${esc(selectedPref)}内の駅を、路線上の並び順で返しています。`
+            : "この都道府県にこの路線の駅はありません。",
+          tags: [
+            { text: esc(list[0]?.lineName ?? "") },
+            { text: "路線順", plain: true },
+          ],
+          meta: `fetch ${fetchCount - before}回`,
+        });
         $("lcount").textContent = `${list.length}件`;
 
         if (!list.length) {
