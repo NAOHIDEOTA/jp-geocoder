@@ -15,6 +15,7 @@
 - **サーバレス** — DB も API サーバも持たない。静的 JSON への fetch だけで動く
 - **軽い** — パッケージはコードのみでデータ非同梱。1検索で読むのは数十〜数百KB、CDNキャッシュ時 100〜200ms（実測）
 - **住所の分割結果つき** — 都道府県・市区町村・大字・丁目・番・号を構造化して返す
+- **市区町村の一覧が引ける** — 都道府県から市区町村を列挙できる（フォームの選択肢用）
 - **表記揺れに強い** — 異体字・ヶケ・漢数字・カナ入力・タイポ・旧市町村名を吸収
 - **正直な精度申告** — どこまで解決できたか（`matchLevel`）と座標の品質（`accuracy`）を必ず返す
 - **TypeScript** — 完全な型定義付き
@@ -114,6 +115,37 @@ const result = await geocoder.geocode("東京都世田谷区太子堂5-5-5");
 | `building`   | `string?` | 切り離した建物名・部屋番号                          |
 | `machiazaId` | `string?` | ABR の町字ID。住所文字列より安定した不変キー        |
 
+### `geocoder.listMunicipalities(pref, options?)`
+
+都道府県に属する市区町村の一覧を返します（住所文字列の解決ではなく、選択肢を出すための機能）。
+
+`pref` はコード（`14` / `"14"` / `"01"`）でも名称（`"神奈川県"` / `"神奈川"`）でも渡せます。
+解決できない場合は例外ではなく空配列を返します。
+
+```ts
+const { municipalities } = await geocoder.listMunicipalities("神奈川県");
+// [{ municipality: "横浜市", ward: ["鶴見区"] }, … , { municipality: "葉山町" }]
+```
+
+| Option           | Default   | Description                        |
+| ---------------- | --------- | ---------------------------------- |
+| `designatedCity` | `"wards"` | 政令指定都市の行政区の並べ方       |
+
+`designatedCity` は**政令指定都市20市の見せ方だけ**を切り替えます。特別区・郡部の町村・
+通常の市はどちらのモードでも同じ形です。
+
+| Mode       | 横浜市の出方                                        | 神奈川県の件数 |
+| ---------- | --------------------------------------------------- | -------------- |
+| `"wards"`  | `{municipality:"横浜市", ward:["鶴見区"]}` が18件   | 58             |
+| `"nested"` | `{municipality:"横浜市", ward:[…18区]}` が1件       | 33             |
+
+出力の約束:
+
+- 並びは団体コード順
+- 郡名は含めません（「三浦郡葉山町」ではなく `"葉山町"`）
+- 東京23区は市と区に割らず単独で返します（`{municipality:"千代田区"}`）
+- 政令指定都市の本体だけの単独エントリは作りません（必ず `ward` つきで現れます）
+
 ### `components`（住所の分割結果）
 
 | Field    | Example      | Description                                      |
@@ -179,6 +211,20 @@ interface AddressComponents {
   block?: number;
   rsdt?: number;
   parcel?: number[];
+}
+
+interface MunicipalitiesResult {
+  municipalities: Municipality[];
+  attribution: string[];
+}
+
+interface Municipality {
+  municipality: string; // 行政区の場合は市名（"横浜市"）
+  ward?: string[]; // 政令指定都市のみ
+}
+
+interface MunicipalityOptions {
+  designatedCity?: "wards" | "nested"; // 既定 "wards"
 }
 ```
 
