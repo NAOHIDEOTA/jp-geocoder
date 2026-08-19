@@ -75,6 +75,22 @@ export interface Fetcher {
   get(path: string): Promise<unknown>;
 }
 
+/** 都道府県。代表点の座標つき */
+export interface Prefecture {
+  /** 都道府県コード2桁（"01"〜"47"） */
+  code: string;
+  name: string;
+  lat: number;
+  lng: number;
+}
+
+export interface PrefecturesResult {
+  /** 都道府県コード順。47件 */
+  prefectures: Prefecture[];
+  /** 出典表示。省略不可（DOC.md §2） */
+  attribution: string[];
+}
+
 /**
  * 政令指定都市の行政区をどう並べるか。政令市以外の出力は影響を受けない。
  * - "wards"  … 行政区ごとに1件（ward は常に1要素）。横浜市なら18件並ぶ
@@ -88,6 +104,13 @@ export interface Municipality {
   municipality: string;
   /** 政令指定都市の行政区。政令市以外では省略される */
   ward?: string[];
+  /**
+   * 代表点の緯度。この1件が指す団体のもの。
+   * designatedCity が "wards" なら行政区（横浜市鶴見区）、
+   * "nested" なら市そのもの（横浜市）の代表点になる。
+   */
+  lat: number;
+  lng: number;
 }
 
 export interface MunicipalityOptions {
@@ -183,6 +206,9 @@ export interface Geocoder {
    * 都道府県に属する市区町村の一覧を返す。
    * @param pref 都道府県コード（1〜47 / "01"〜"47"）または名称（"神奈川県" / "神奈川"）
    */
+  /** 都道府県の一覧を返す。名称だけで足りるなら PREFECTURES 定数でもよい */
+  listPrefectures(): Promise<PrefecturesResult>;
+
   listMunicipalities(
     pref: string | number,
     options?: MunicipalityOptions,

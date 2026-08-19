@@ -26,6 +26,10 @@ function wardName(record, parentName) {
         ? record.name.slice(parentName.length)
         : record.name;
 }
+/** 代表点。配信物に座標が無い場合に 0 を混ぜないよう、そのまま写す */
+function pos(record) {
+    return { lat: record.lat, lng: record.lng };
+}
 /**
  * 指定した都道府県の市区町村一覧を作る。並びは団体コード順。
  *
@@ -45,7 +49,7 @@ export function buildMunicipalities(records, prefCode, mode = "wards") {
             const parent = record.parent ? byCode.get(record.parent) : undefined;
             // 親が引けない配信では区をそのまま1件として出す（情報を落とさない）
             if (!parent) {
-                out.push({ municipality: record.name });
+                out.push({ municipality: record.name, ...pos(record) });
                 continue;
             }
             const ward = wardName(record, parent.name);
@@ -55,19 +59,41 @@ export function buildMunicipalities(records, prefCode, mode = "wards") {
                     hit.ward?.push(ward);
                     continue;
                 }
-                const entry = { municipality: parent.name, ward: [ward] };
+                // まとめた側の代表点は市そのもののもの。行政区のものではない
+                const entry = {
+                    municipality: parent.name,
+                    ward: [ward],
+                    ...pos(parent),
+                };
                 merged.set(parent.name, entry);
                 out.push(entry);
                 continue;
             }
-            out.push({ municipality: parent.name, ward: [ward] });
+            out.push({ municipality: parent.name, ward: [ward], ...pos(record) });
             continue;
         }
         // 政令指定都市の本体は行政区の側から出すので、ここでは出さない
         if (isDesignatedCity(record, records))
             continue;
-        out.push({ municipality: record.name });
+        out.push({ municipality: record.name, ...pos(record) });
     }
     return out;
+}
+/**
+ * 都道府県の一覧を作る。並びは都道府県コード順。
+ *
+ * 名称だけなら PREFECTURES（データ非依存の定数）で足りるが、
+ * 代表点の座標が要る場合はこちらを使う。
+ */
+export function buildPrefectures(records) {
+    return records
+        .filter((r) => r.level === "pref")
+        .sort((a, b) => (a.code < b.code ? -1 : a.code > b.code ? 1 : 0))
+        .map((r) => ({
+        code: r.code,
+        name: r.name,
+        lat: r.lat,
+        lng: r.lng,
+    }));
 }
 //# sourceMappingURL=municipalities.js.map

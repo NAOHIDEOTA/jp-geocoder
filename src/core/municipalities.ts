@@ -10,7 +10,7 @@
  */
 
 import type { CityRecord } from "./cities.js";
-import type { DesignatedCityMode, Municipality } from "../types.js";
+import type { DesignatedCityMode, Municipality, Prefecture } from "../types.js";
 
 /**
  * その市区町村が政令指定都市の本体か（＝自分を親に持つ行政区があるか）。
@@ -29,6 +29,11 @@ function wardName(record: CityRecord, parentName: string): string {
   return record.name.startsWith(parentName)
     ? record.name.slice(parentName.length)
     : record.name;
+}
+
+/** 代表点。配信物に座標が無い場合に 0 を混ぜないよう、そのまま写す */
+function pos(record: CityRecord): { lat: number; lng: number } {
+  return { lat: record.lat as number, lng: record.lng as number };
 }
 
 /**
@@ -56,7 +61,7 @@ export function buildMunicipalities(
       const parent = record.parent ? byCode.get(record.parent) : undefined;
       // 親が引けない配信では区をそのまま1件として出す（情報を落とさない）
       if (!parent) {
-        out.push({ municipality: record.name });
+        out.push({ municipality: record.name, ...pos(record) });
         continue;
       }
       const ward = wardName(record, parent.name);
@@ -67,21 +72,44 @@ export function buildMunicipalities(
           hit.ward?.push(ward);
           continue;
         }
-        const entry: Municipality = { municipality: parent.name, ward: [ward] };
+        // まとめた側の代表点は市そのもののもの。行政区のものではない
+        const entry: Municipality = {
+          municipality: parent.name,
+          ward: [ward],
+          ...pos(parent),
+        };
         merged.set(parent.name, entry);
         out.push(entry);
         continue;
       }
 
-      out.push({ municipality: parent.name, ward: [ward] });
+      out.push({ municipality: parent.name, ward: [ward], ...pos(record) });
       continue;
     }
 
     // 政令指定都市の本体は行政区の側から出すので、ここでは出さない
     if (isDesignatedCity(record, records)) continue;
 
-    out.push({ municipality: record.name });
+    out.push({ municipality: record.name, ...pos(record) });
   }
 
   return out;
+}
+
+/**
+ * 都道府県の一覧を作る。並びは都道府県コード順。
+ *
+ * 名称だけなら PREFECTURES（データ非依存の定数）で足りるが、
+ * 代表点の座標が要る場合はこちらを使う。
+ */
+export function buildPrefectures(records: readonly CityRecord[]): Prefecture[] {
+  return records
+    .filter((r) => r.level === "pref")
+    .sort((a, b) => (a.code < b.code ? -1 : a.code > b.code ? 1 : 0))
+    .map((r) => ({
+      code: r.code,
+      name: r.name,
+      lat: r.lat as number,
+      lng: r.lng as number,
+    }));
 }

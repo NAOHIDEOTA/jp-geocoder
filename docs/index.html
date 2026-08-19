@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>jp-geocoder demo</title>
+    <title>jp-geocoder</title>
     <link
       rel="icon"
       href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><text y='14' font-size='14'>📍</text></svg>"
@@ -17,216 +17,421 @@
     <style>
       :root {
         --bg: #ffffff;
-        --fg: #1a1a1a;
-        --muted: #6b7280;
-        --line: #e5e7eb;
-        --accent: #1d4ed8;
-        --card: #f9fafb;
-        --ok: #047857;
-        --ok-bg: #ecfdf5;
-        --err: #dc2626;
-        --err-bg: #fef2f2;
-        --warn: #b45309;
-        --weak: #6b7280;
+        --bg-soft: #f7f8fa;
+        --bg-elev: #ffffff;
+        --fg: #10141c;
+        --muted: #667085;
+        --line: #e4e7ec;
+        --accent: #bc002d;
+        --accent-soft: #fdecef;
+        --ok: #067647;
+        --ok-soft: #ecfdf3;
+        --err: #d92d20;
+        --err-soft: #fef3f2;
+        --warn: #b54708;
+        --code-bg: #12151c;
+        --code-fg: #d5dae4;
+        --c-key: #7dd3fc;
+        --c-str: #a5e8a1;
+        --c-num: #fbbf87;
+        --c-bool: #d8b4fe;
       }
       @media (prefers-color-scheme: dark) {
         :root {
-          --bg: #0f1115;
-          --fg: #e8e8e8;
-          --muted: #9aa1ac;
-          --line: #262b33;
-          --accent: #7aa2ff;
-          --card: #161a21;
-          --ok: #34d399;
-          --ok-bg: #0c2b22;
+          --bg: #0a0c11;
+          --bg-soft: #10131a;
+          --bg-elev: #12151d;
+          --fg: #e6e8ee;
+          --muted: #8b93a7;
+          --line: #212734;
+          --accent: #ff5b7a;
+          --accent-soft: #3a1018;
+          --ok: #4ade80;
+          --ok-soft: #0d2a1d;
           --err: #f87171;
-          --err-bg: #2d1416;
+          --err-soft: #2a1416;
           --warn: #fbbf24;
-          --weak: #9aa1ac;
+          --code-bg: #05070b;
         }
       }
       * {
         box-sizing: border-box;
       }
+      /* クラス側の display が hidden 属性に勝ってしまうので明示的に潰す */
+      [hidden] {
+        display: none !important;
+      }
+      html,
       body {
         margin: 0;
-        padding: 1.5rem 1.25rem 3rem;
+        padding: 0;
+      }
+      body {
         background: var(--bg);
         color: var(--fg);
         font:
-          16px/1.7 system-ui,
-          -apple-system,
+          15px/1.65 -apple-system,
+          BlinkMacSystemFont,
+          "Segoe UI",
           "Hiragino Sans",
           "Noto Sans JP",
+          system-ui,
           sans-serif;
+        -webkit-font-smoothing: antialiased;
       }
-      main {
-        max-width: 54rem;
-        margin: 0 auto;
+      code,
+      pre,
+      .mono {
+        font-family:
+          ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
       }
-      h1 {
-        font-size: 1.4rem;
-        margin: 0 0 0.15rem;
+
+      /* ---------------------------------------------------------- レイアウト */
+      .app {
+        display: grid;
+        grid-template-columns: 264px minmax(0, 1fr) 400px;
+        align-items: start;
+        min-height: 100vh;
       }
-      .lead {
-        color: var(--muted);
-        font-size: 0.9rem;
-        margin: 0 0 1rem;
-      }
-      form {
+      .sidebar {
+        position: sticky;
+        top: 0;
+        height: 100vh;
+        overflow-y: auto;
+        padding: 1.5rem 1rem;
+        border-right: 1px solid var(--line);
+        background: var(--bg-soft);
         display: flex;
-        gap: 0.5rem;
+        flex-direction: column;
+        justify-content: space-between;
+        gap: 1.5rem;
+        .sidebar-top {
+          border-bottom: 1px solid var(--line);
+        }
+        .sidebar-middle {
+          flex: 1;
+        }
       }
-      input {
-        flex: 1;
-        padding: 0.7rem 0.9rem;
-        font-size: 1rem;
-        border: 1.5px solid var(--line);
+      .main {
+        min-width: 0;
+        padding: 2.25rem 2.25rem 5rem;
+      }
+      .codepane {
+        position: sticky;
+        top: 0;
+        height: 100vh;
+        display: flex;
+        flex-direction: column;
+        background: var(--code-bg);
+        border-left: 1px solid var(--line);
+      }
+
+      /* ---------------------------------------------------------- サイドバー */
+      .brand {
+        display: flex;
+        align-items: baseline;
+        gap: 0.5rem;
+        font-size: 1.05rem;
+        font-weight: 700;
+        letter-spacing: -0.01em;
+      }
+      .brand .dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--accent);
+      }
+      .tagline {
+        margin: 0.5rem 0 1.5rem;
+        font-size: 0.8rem;
+        line-height: 1.55;
+        color: var(--muted);
+      }
+      .navgroup {
+        margin: 1.25rem 0 0.4rem;
+        font-size: 0.68rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--muted);
+      }
+      .navitem {
+        display: block;
+        width: 100%;
+        text-align: left;
+        padding: 0.42rem 0.6rem;
+        margin-bottom: 2px;
+        border: 0;
+        border-radius: 7px;
+        background: transparent;
+        color: var(--fg);
+        font-family: inherit;
+        font-size: 0.845rem;
+        cursor: pointer;
+      }
+      .navitem:hover {
+        background: color-mix(in srgb, var(--accent) 8%, transparent);
+      }
+      .navitem.on {
+        background: var(--accent-soft);
+        color: var(--accent);
+        font-weight: 600;
+      }
+      .navitem .mono {
+        font-size: 0.8rem;
+      }
+      .sidefoot {
+        margin-top: 2rem;
+        padding-top: 1rem;
+        border-top: 1px solid var(--line);
+        font-size: 0.7rem;
+        line-height: 1.6;
+        color: var(--muted);
+      }
+      .sidefoot a {
+        color: var(--muted);
+      }
+
+      /* ---------------------------------------------------------- 本文 */
+      .phead {
+        margin-bottom: 1.5rem;
+      }
+      .phead h1 {
+        margin: 0;
+        font-size: 2rem;
+        font-weight: 700;
+        letter-spacing: -0.02em;
+      }
+      .phead p {
+        margin: 0.45rem 0 0.9rem;
+        color: var(--muted) !important;
+        font-size: 0.92rem;
+        max-width: 62ch;
+      }
+      .sig {
+        display: inline-block;
+        padding: 0.3rem 0.65rem;
+        border: 1px solid var(--line);
+        border-radius: 7px;
+        background: var(--bg-soft);
+        font-size: 0.78rem;
+        color: var(--fg);
+      }
+      .card {
+        border: 1px solid var(--line);
+        border-radius: 11px;
+        background: var(--bg-elev);
+        overflow: hidden;
+        margin-bottom: 1rem;
+      }
+      .card + .card {
+        margin-top: 0;
+      }
+      .cardhead .ng {
+        color: var(--err);
+      }
+      .cardhead {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        padding: 0.6rem 0.9rem;
+        border-bottom: 1px solid var(--line);
+        background: var(--bg-soft);
+        font-size: 0.74rem;
+        font-weight: 600;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        color: var(--muted);
+      }
+      .cardbody {
+        padding: 0.9rem;
+      }
+
+      /* 入力 */
+      .row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        align-items: center;
+      }
+      input[type="search"],
+      select {
+        flex: 1 1 16rem;
+        min-width: 0;
+        padding: 0.6rem 0.75rem;
+        border: 1px solid var(--line);
         border-radius: 8px;
         background: var(--bg);
         color: var(--fg);
-        transition: border-color 0.15s;
+        font: inherit;
+        font-size: 0.92rem;
       }
-      input:focus-visible {
-        outline: 2px solid var(--accent);
+      input[type="search"]:focus,
+      select:focus {
+        outline: 2px solid color-mix(in srgb, var(--accent) 45%, transparent);
         outline-offset: 1px;
+        border-color: var(--accent);
       }
-      /* 検証状態。パッと見で OK / NG が分かるように入力欄自体を塗る */
-      input.is-ok {
-        border-color: var(--ok);
-      }
-      input.is-error {
-        border-color: var(--err);
-        background: var(--err-bg);
-      }
-      button {
-        padding: 0.7rem 1.25rem;
-        font-size: 1rem;
-        cursor: pointer;
+      .btn {
+        padding: 0.6rem 1.05rem;
         border: 0;
         border-radius: 8px;
         background: var(--accent);
         color: #fff;
-      }
-      /* 結果ステータス行 */
-      .status {
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-        min-height: 2.1rem;
-        margin: 0.5rem 0;
-        font-size: 0.9rem;
-      }
-      .status .chip {
-        display: inline-flex;
-        align-items: center;
-        gap: 0.35rem;
-        padding: 0.15rem 0.7rem;
-        border-radius: 999px;
+        font: inherit;
+        font-size: 0.88rem;
         font-weight: 600;
+        cursor: pointer;
       }
-      .status .chip.ok {
-        color: var(--ok);
-        background: var(--ok-bg);
-      }
-      .status .chip.err {
-        color: var(--err);
-        background: var(--err-bg);
-      }
-      .status .detail {
-        color: var(--muted);
-        font-size: 0.82rem;
-      }
-      .samples {
+      .chips {
         display: flex;
         flex-wrap: wrap;
-        gap: 0.4rem;
-        margin: 0.25rem 0 0.75rem;
+        gap: 0.35rem;
+        margin-top: 0.7rem;
       }
-      .samples button {
-        background: var(--card);
+      .chip {
+        padding: 0.22rem 0.6rem;
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        background: var(--bg);
         color: var(--muted);
+        font: inherit;
+        font-size: 0.755rem;
+        cursor: pointer;
+      }
+      .chip:hover {
+        border-color: var(--accent);
+        color: var(--accent);
+      }
+      .seg {
+        display: inline-flex;
         border: 1px solid var(--line);
+        border-radius: 8px;
+        overflow: hidden;
+      }
+      .seg button {
+        padding: 0.5rem 0.8rem;
+        border: 0;
+        background: var(--bg);
+        color: var(--muted);
+        font: inherit;
         font-size: 0.8rem;
-        padding: 0.2rem 0.6rem;
+        cursor: pointer;
       }
-      #map,
-      #rmap,
-      #lmap {
-        height: 420px;
+      .seg button + button {
+        border-left: 1px solid var(--line);
+      }
+      .seg button.on {
+        background: var(--accent);
+        color: #fff;
+        font-weight: 600;
+      }
+      .check {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        font-size: 0.82rem;
+        color: var(--muted);
+      }
+
+      .meta {
+        color: var(--muted);
+        font-size: 0.78rem;
+      }
+
+      /* 地図 */
+      .map {
+        height: 340px;
         border: 1px solid var(--line);
-        border-radius: 10px;
-        margin-bottom: 0.75rem;
+        border-radius: 11px;
+        margin-bottom: 1rem;
+        z-index: 0;
       }
-      .wrap {
+
+      /* テーブル */
+      .scroll {
         overflow-x: auto;
-        border: 1px solid var(--line);
-        border-radius: 10px;
-        background: var(--card);
       }
       table {
         width: 100%;
         border-collapse: collapse;
-        font-size: 0.88rem;
+        font-size: 0.845rem;
       }
       th,
       td {
         text-align: left;
-        padding: 0.55rem 0.7rem;
+        padding: 0.55rem 0.9rem;
         border-bottom: 1px solid var(--line);
         white-space: nowrap;
       }
       th {
+        position: sticky;
+        top: 0;
+        background: var(--bg-soft);
         color: var(--muted);
-        font-weight: 600;
-        font-size: 0.78rem;
+        font-size: 0.7rem;
+        font-weight: 700;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
       }
-      tr:last-child td {
+      tbody tr:last-child td {
         border-bottom: 0;
       }
-      tbody tr {
+      tbody tr.click {
         cursor: pointer;
       }
-      tbody tr:hover {
-        background: color-mix(in srgb, var(--accent) 8%, transparent);
+      tbody tr.click:hover {
+        background: color-mix(in srgb, var(--accent) 6%, transparent);
       }
-      tbody tr.selected {
-        background: color-mix(in srgb, var(--accent) 14%, transparent);
+      tbody tr.sel {
+        background: color-mix(in srgb, var(--accent) 11%, transparent);
       }
-      .addr {
+      td.wide {
         white-space: normal;
-        min-width: 16rem;
+        min-width: 15rem;
       }
-      /* 住所の分割結果（components）をチップで並べる */
-      .parts {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 0.25rem;
-        margin-top: 0.3rem;
-      }
-      .part {
-        display: inline-flex;
-        align-items: center;
-        gap: 0.3rem;
-        font-size: 0.74rem;
-        padding: 0.05rem 0.45rem;
-        border: 1px solid var(--line);
-        border-radius: 5px;
-        background: var(--bg);
-        color: var(--fg);
-        white-space: nowrap;
-      }
-      .part .k {
+      td.num {
+        text-align: right;
         color: var(--muted);
-        font-size: 0.68rem;
-        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        font-variant-numeric: tabular-nums;
       }
+      td.strong {
+        font-weight: 600;
+      }
+      .empty {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        min-height: 210px;
+        padding: 2rem 1.2rem;
+        background: var(--bg-soft);
+        color: var(--muted);
+        font-size: 0.88rem;
+        text-align: center;
+        line-height: 1.7;
+      }
+      .empty .ico {
+        font-size: 2rem;
+        line-height: 1;
+        opacity: 0.75;
+      }
+      .empty.ng {
+        background: var(--err-soft);
+        color: var(--err);
+      }
+
+      /* バッジ・タグ */
       .badge {
         display: inline-block;
         padding: 0.05rem 0.45rem;
-        border-radius: 999px;
-        font-size: 0.75rem;
         border: 1px solid currentColor;
+        border-radius: 999px;
+        font-size: 0.7rem;
+        font-weight: 600;
       }
       .lv-rsdt,
       .lv-parcel {
@@ -238,391 +443,1418 @@
       .lv-oaza,
       .lv-city,
       .lv-pref {
-        color: var(--weak);
-      }
-      .empty {
         color: var(--muted);
-        padding: 1rem;
-        font-size: 0.9rem;
       }
-      /* レスポンス JSON の生表示 */
-      .raw {
-        margin-top: 0.75rem;
+      .tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.25rem;
+        margin-top: 0.3rem;
+      }
+      .tag {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+        padding: 0.05rem 0.4rem;
+        border-radius: 5px;
+        background: var(--bg-soft);
         border: 1px solid var(--line);
-        border-radius: 10px;
-        background: var(--card);
+        font-size: 0.71rem;
+        color: var(--fg);
       }
-      .raw summary {
-        cursor: pointer;
-        padding: 0.55rem 0.9rem;
-        font-size: 0.85rem;
+      .tag b {
+        font-weight: 600;
         color: var(--muted);
+        font-size: 0.66rem;
+        text-transform: uppercase;
       }
-      .raw pre {
-        margin: 0;
-        padding: 0.75rem 0.9rem;
-        border-top: 1px solid var(--line);
-        overflow-x: auto;
-        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-        font-size: 0.78rem;
-        line-height: 1.5;
-      }
-      code {
-        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-        font-size: 0.85em;
-      }
-      footer {
-        margin-top: 2rem;
-        font-size: 0.8rem;
-        color: var(--muted);
-      }
-      a {
+      .wardtags span {
+        display: inline-block;
+        margin: 1px 2px 1px 0;
+        padding: 0.05rem 0.42rem;
+        border-radius: 5px;
+        background: var(--accent-soft);
         color: var(--accent);
+        font-size: 0.72rem;
       }
 
-      /* ---- 何ができるか の3点セット ---- */
-      .points {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
-        gap: 0.6rem;
-        list-style: none;
-        margin: 1rem 0 1.25rem;
-        padding: 0;
-      }
-      .points li {
-        padding: 0.7rem 0.9rem;
-        border: 1px solid var(--line);
-        border-radius: 10px;
-        background: var(--card);
-        font-size: 0.86rem;
-        line-height: 1.6;
-      }
-      .points b {
-        display: block;
-        font-size: 0.95rem;
-        margin-bottom: 0.15rem;
-      }
-      .points span {
-        color: var(--muted);
-      }
-      /* ---- タブ ---- */
-      .tabs {
-        display: flex;
-        gap: 0.25rem;
-        border-bottom: 2px solid var(--line);
-        margin-bottom: 1.1rem;
-      }
-      .tabs button {
-        background: transparent;
-        color: var(--muted);
-        border: 0;
-        border-bottom: 2px solid transparent;
-        border-radius: 0;
-        margin-bottom: -2px;
-        padding: 0.6rem 0.9rem;
-        font-size: 0.95rem;
-        font-weight: 600;
-      }
-      .tabs button.on {
-        color: var(--accent);
-        border-bottom-color: var(--accent);
-      }
-      /* ---- matchLevel / accuracy の凡例 ---- */
+      /* 凡例 */
       .legend {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 0.35rem 0.9rem;
-        margin: 0.7rem 0 0;
-        padding: 0.7rem 0.9rem;
         border: 1px solid var(--line);
-        border-radius: 10px;
-        background: var(--card);
-        font-size: 0.78rem;
+        border-radius: 9px;
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+        gap: 0.3rem 1rem;
+        padding: 0.85rem 0.9rem;
+        font-size: 0.77rem;
         color: var(--muted);
       }
-      .legend .row {
+      .legend .lt {
+        grid-column: 1 / -1;
+        font-weight: 700;
+        color: var(--fg);
+        font-size: 0.74rem;
+      }
+      .legend .lt:not(:first-child) {
+        margin-top: 0.5rem;
+      }
+      .note {
+        margin: 0 0 1rem;
+        font-size: 0.81rem;
+        line-height: 1.6;
+        color: var(--muted);
+        max-width: 70ch;
+      }
+
+      /* ---------------------------------------------------------- コードパネル */
+      .codehead {
         display: flex;
         align-items: center;
-        gap: 0.4rem;
+        justify-content: space-between;
+        padding: 0.75rem 1rem;
+        border-bottom: 1px solid #ffffff14;
+        color: #8b93a7;
+        font-size: 0.7rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
       }
-      .legend .t {
+      .codehead .who {
+        text-transform: none;
+        letter-spacing: 0;
+        font-weight: 500;
+        font-size: 0.72rem;
+        color: #5d6577;
+      }
+      .codepane pre {
+        flex: 1;
+        margin: 0;
+        padding: 1rem;
+        overflow: auto;
+        color: var(--code-fg);
+        font-size: 0.755rem;
+        line-height: 1.62;
+        tab-size: 2;
+      }
+      .k {
+        color: var(--c-key);
+      }
+      .s {
+        color: var(--c-str);
+      }
+      .n {
+        color: var(--c-num);
+      }
+      .b {
+        color: var(--c-bool);
+      }
+
+      @media (max-width: 1200px) {
+        .app {
+          grid-template-columns: 232px minmax(0, 1fr);
+        }
+        .codepane {
+          grid-column: 1 / -1;
+          position: static;
+          height: 380px;
+          border-left: 0;
+          border-top: 1px solid var(--line);
+        }
+      }
+      @media (max-width: 820px) {
+        .app {
+          grid-template-columns: 1fr;
+        }
+        .sidebar {
+          position: static;
+          height: auto;
+          border-right: 0;
+          border-bottom: 1px solid var(--line);
+        }
+        .main {
+          padding: 1.5rem 1.1rem 3rem;
+        }
+      }
+
+      /* ---- リファレンス表（引数・レスポンス） ---- */
+      .ref {
         width: 100%;
+        border-collapse: collapse;
+        font-size: 0.815rem;
+      }
+      .ref th,
+      .ref td {
+        padding: 0.5rem 0.9rem;
+        border-bottom: 1px solid var(--line);
+        vertical-align: top;
+        white-space: normal;
+      }
+      .ref th {
+        position: static;
+      }
+      .ref tr:last-child td {
+        border-bottom: 0;
+      }
+      .ref .name {
+        white-space: nowrap;
+        font-family:
+          ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+        font-size: 0.79rem;
         font-weight: 600;
-        color: var(--fg);
-        font-size: 0.8rem;
       }
-      /* ---- 市区町村パネル ---- */
-      .controls {
+      .ref .type {
+        white-space: nowrap;
+        font-family:
+          ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+        font-size: 0.75rem;
+        color: var(--accent);
+      }
+      .ref .def {
+        white-space: nowrap;
+        font-size: 0.75rem;
+        color: var(--muted);
+      }
+      .ref .desc {
+        color: var(--muted);
+        min-width: 16rem;
+      }
+      .req {
+        display: inline-block;
+        margin-left: 0.3rem;
+        padding: 0 0.3rem;
+        border-radius: 4px;
+        background: var(--err-soft);
+        color: var(--err);
+        font-size: 0.63rem;
+        font-weight: 700;
+        vertical-align: 1px;
+      }
+      .sub {
+        padding: 0.45rem 0.9rem;
+        background: var(--bg-soft);
+        border-bottom: 1px solid var(--line);
+        font-size: 0.72rem;
+        font-weight: 700;
+        color: var(--muted);
+        font-family:
+          ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+      }
+
+      /* ---- 右ペインを Request / Response の2段にする ---- */
+      .codepane {
+        display: grid;
+        grid-template-rows: auto minmax(0, auto) auto minmax(0, 1fr);
+      }
+      .codepane pre {
+        margin: 0;
+        padding: 0.85rem 1rem;
+        overflow: auto;
+        color: var(--code-fg);
+        font-size: 0.745rem;
+        line-height: 1.62;
+        tab-size: 2;
+      }
+      #req {
+        max-height: 15rem;
+        border-bottom: 1px solid #ffffff14;
+      }
+      .kw {
+        color: #ffa8b8;
+      }
+      .fn {
+        color: #7dd3fc;
+      }
+      .cm {
+        color: #5d6577;
+      }
+
+      /* ---- 実行結果の一行。表とは別に置く ---- */
+      .result {
         display: flex;
-        flex-wrap: wrap;
         align-items: center;
+        flex-wrap: wrap;
+        gap: 0.4rem 0.75rem;
+        /* 出入りでカードの高さが動かないよう、行の高さを決めておく */
+        height: 2.6rem;
+        min-height: 2.6rem;
+        margin-bottom: 0.85rem;
+        padding: 0.5rem 0.9rem;
+        border: 1px solid var(--line);
+        border-radius: 9px;
+        background: var(--bg-soft);
+        font-size: 0.83rem;
+      }
+      .result .mark {
+        font-weight: 700;
+        color: var(--accent);
+      }
+      .result .lead2 {
+        font-weight: 700;
+        font-size: 0.95rem;
+      }
+      .result .cond {
+        color: var(--muted);
+      }
+      .result .cost {
+        margin-left: auto;
+        color: var(--muted);
+        font-size: 0.76rem;
+        font-variant-numeric: tabular-nums;
+      }
+      /*
+       * 実行前は見せないが場所は取る。display:none にすると結果が出た瞬間に
+       * 表が縮んで揺れる。文言は空状態の1枚だけに保ちたいので visibility で消す。
+       */
+      .result.placeholder {
+        visibility: hidden;
+      }
+      .result.ng .mark,
+      .result.ng .lead2 {
+        color: var(--err);
+      }
+
+      .rescol {
+        display: flex;
+        flex-direction: column;
         gap: 0.6rem;
-        margin-bottom: 0.5rem;
+        min-width: 0;
+        /* 実行前後で背が変わらないよう固定する。中身は card 側でスクロールする */
+        height: 460px;
       }
-      .controls select {
-        padding: 0.6rem 0.7rem;
+      .rescol > .card {
+        flex: 1;
+        min-height: 0;
+        max-height: none;
+        display: flex;
+        flex-direction: column;
+      }
+      .rescol > .card > .scroll {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        min-height: 0;
+        border-radius: inherit;
+      }
+
+      /* ---- 地図と結果を横に並べる ---- */
+      .split {
+        display: grid;
+        grid-template-columns: minmax(0, 4fr) minmax(0, 6fr);
+        gap: 0.85rem;
+        align-items: stretch;
+        margin-bottom: 1rem;
+      }
+      .split .map {
+        height: auto;
+        min-height: 0;
+        margin: 0;
+      }
+      .split > .card {
+        margin: 0;
+        max-height: 460px;
+        display: flex;
+        flex-direction: column;
+      }
+      .split > .card .scroll {
+        overflow: auto;
+      }
+      @media (max-width: 1500px) {
+        .split {
+          grid-template-columns: minmax(0, 1fr);
+        }
+        .split .map {
+          height: 280px;
+        }
+        .rescol {
+          height: 420px;
+        }
+      }
+
+      /* ---- 引数・レスポンスは畳んでおく ---- */
+      .refbox {
+        border: 1px solid var(--line);
+        border-radius: 11px;
+        background: var(--bg-elev);
+        margin-bottom: 1rem;
+      }
+      .refbox > summary {
+        padding: 0.7rem 0.95rem;
+        cursor: pointer;
+        font-size: 0.8rem;
+        font-weight: 600;
+        color: var(--muted);
+        list-style: none;
+      }
+      .refbox > summary::-webkit-details-marker {
+        display: none;
+      }
+      .refbox > summary::before {
+        content: "▸ ";
+        color: var(--accent);
+      }
+      .refbox[open] > summary::before {
+        content: "▾ ";
+      }
+      .refbox[open] > summary {
+        border-bottom: 1px solid var(--line);
+      }
+      /* 見出しと表を分ける。見出しは表の一部ではなく段落の頭として扱う */
+      .refsec {
+        padding: 1.1rem 1.1rem 0;
+      }
+      .refsec:last-child {
+        padding-bottom: 1.2rem;
+      }
+      .refh {
+        margin: 0 0 0.7rem;
+        padding-bottom: 0.3rem;
+        border-bottom: 2px solid var(--accent);
         font-size: 1rem;
-        border: 1px solid var(--line);
-        border-radius: 8px;
-        background: var(--bg);
-        color: var(--fg);
+        font-weight: 700;
+        display: inline-block;
       }
-      .seg {
-        display: inline-flex;
+      .refsub {
+        margin: 1.1rem 0 0.4rem;
+        font-size: 0.78rem;
+        font-weight: 700;
+        color: var(--muted);
+        font-family:
+          ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+      }
+      .refsub:first-of-type {
+        margin-top: 0;
+      }
+      .reftable {
         border: 1px solid var(--line);
-        border-radius: 8px;
+        border-radius: 9px;
         overflow: hidden;
       }
-      .seg button {
-        background: var(--bg);
-        color: var(--muted);
-        border: 0;
-        border-radius: 0;
-        font-size: 0.82rem;
-        padding: 0.55rem 0.8rem;
+      .reftable + .refsub {
+        margin-top: 1.1rem;
       }
-      .seg button.on {
-        background: var(--accent);
+
+      /* ---- 操作するところ ---- */
+      .console {
+        border: 0;
+        border-radius: 12px;
+        padding: 1.05rem 1.15rem 1.15rem;
+        margin-bottom: 1rem;
+        /* 眩しくならないよう深い紅にとどめ、振り幅も小さくする */
+        background: linear-gradient(160deg, #8f0022 0%, #a81733 100%);
         color: #fff;
       }
-      .seg button + button {
-        border-left: 1px solid var(--line);
+      @media (prefers-color-scheme: dark) {
+        .console {
+          background: linear-gradient(160deg, #5e0018 0%, #7a1226 100%);
+        }
       }
-      .hint {
+      .clabel {
+        display: block;
+        margin-bottom: 0.55rem;
         font-size: 0.8rem;
-        color: var(--muted);
-        margin: 0.1rem 0 0.7rem;
+        font-weight: 700;
+        color: #fff;
       }
-      /* 区名のチップ */
-      .wards {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 0.25rem;
+      .console input[type="search"],
+      .console select {
+        padding: 0.72rem 0.85rem;
+        font-size: 1rem;
+        border: 0;
+        background: #fff;
+        color: #10141c;
       }
-      .wards span {
-        font-size: 0.75rem;
-        padding: 0.1rem 0.45rem;
-        border-radius: 999px;
-        background: color-mix(in srgb, var(--accent) 12%, transparent);
-        color: var(--accent);
+      .console input[type="search"]:focus,
+      .console select:focus {
+        outline: 2px solid rgba(255, 255, 255, 0.85);
+        outline-offset: 1px;
       }
-      td.muni {
-        font-weight: 600;
-        white-space: nowrap;
+      .console .btn {
+        padding: 0.72rem 1.4rem;
+        font-size: 0.95rem;
+        background: rgba(255, 255, 255, 0.16);
+        border: 1px solid rgba(255, 255, 255, 0.5);
+        color: #fff;
       }
-      td.wcell {
-        white-space: normal;
-        width: 100%;
+      .console .btn:hover {
+        background: rgba(255, 255, 255, 0.26);
       }
-      .num {
-        color: var(--muted);
-        font-variant-numeric: tabular-nums;
-        text-align: right;
+      .console .chip {
+        background: rgba(255, 255, 255, 0.14);
+        border-color: rgba(255, 255, 255, 0.35);
+        color: #fff;
+      }
+      .console .chip:hover {
+        background: rgba(255, 255, 255, 0.26);
+        border-color: #fff;
+        color: #fff;
+      }
+      .console .check,
+      .console .meta {
+        color: rgba(255, 255, 255, 0.88);
+      }
+      .hint2 {
+        margin: 0.6rem 0 0;
+        font-size: 0.76rem;
+        color: rgba(255, 255, 255, 0.85);
+      }
+      .phead p {
+        font-size: 1rem;
+        color: var(--fg);
+        margin: 0.4rem 0 0.9rem;
       }
     </style>
   </head>
   <body>
-    <main>
-      <h1>jp-geocoder</h1>
-      <p class="lead">
-        日本の住所を扱うための、<strong>サーバもDBもAPIキーも要らない</strong>
-        JavaScript ライブラリです。このページ自体が実物で、
-        あなたのブラウザの中だけで動いています（サーバ側の処理はゼロ）。
-      </p>
-
-      <ul class="points">
-        <li>
-          <b>住所 → 緯度経度</b>
-          <span
-            >表記ゆれ・タイポ・旧市町村名・カナ入力を吸収して解決します。</span
-          >
-        </li>
-        <li>
-          <b>都道府県 → 市区町村</b>
-          <span>フォームの選択肢に使える市区町村の一覧を返します。</span>
-        </li>
-        <li>
-          <b>住所 → 最寄り駅</b>
-          <span
-            >全国1万駅。座標を経由して、住所からそのまま最寄り駅を出せます。</span
-          >
-        </li>
-        <li>
-          <b>どこまで解けたかを必ず返す</b>
-          <span
-            >「たぶん合ってる座標」を黙って返しません。粒度と品質を明示します。</span
-          >
-        </li>
-      </ul>
-
-      <nav class="tabs" id="tabs">
-        <button type="button" data-tab="geo" class="on">住所 → 緯度経度</button>
-        <button type="button" data-tab="muni">都道府県 → 市区町村</button>
-        <button type="button" data-tab="rail">住所 → 最寄り駅</button>
-        <button type="button" data-tab="line">都道府県 → 路線 → 駅</button>
-      </nav>
-
-      <section id="tab-geo">
-        <form id="f">
-          <input
-            id="q"
-            type="search"
-            placeholder="東京都世田谷区太子堂5-5-5"
-            autocomplete="off"
-          />
-          <button type="submit">検索</button>
-        </form>
-
-        <!-- OK / NG がひと目で分かるステータス行 -->
-        <div class="status" id="status"></div>
-
-        <div class="samples" id="samples"></div>
-
-        <div id="map"></div>
-
-        <div class="wrap">
-          <div id="out" class="empty">住所を入力してください。</div>
+    <div class="app">
+      <!-- ------------------------------------------------------ サイドバー -->
+      <aside class="sidebar">
+        <div class="sidebar-top">
+          <div class="brand"><span class="dot"></span>jp-geocoder</div>
+          <p class="tagline">
+            日本の住所・駅を扱う JavaScript ライブラリ。サーバも DB も API
+            キーも 不要で、静的 JSON への fetch だけで動きます。
+          </p>
         </div>
 
-        <!-- geocode() が返した JSON をそのまま見せる（API利用者向け） -->
-        <details class="raw" id="rawbox" open>
-          <summary>レスポンス JSON</summary>
-          <pre id="raw"></pre>
-        </details>
+        <div class="sidebar-middle">
+          <div class="navgroup">住所</div>
+          <button class="navitem on" data-panel="geo">
+            <span class="mono">geocode()</span>
+          </button>
+          <button class="navitem" data-panel="pref">
+            <span class="mono">listPrefectures()</span>
+          </button>
+          <button class="navitem" data-panel="muni">
+            <span class="mono">listMunicipalities()</span>
+          </button>
 
-        <div class="legend">
-          <span class="t">matchLevel — どこまで解決できたか</span>
-          <span class="row"
-            ><span class="badge lv-rsdt">rsdt</span>号（住居表示）</span
-          >
-          <span class="row"
-            ><span class="badge lv-block">block</span>番（街区）</span
-          >
-          <span class="row"
-            ><span class="badge lv-parcel">parcel</span>筆（地番）</span
-          >
-          <span class="row"><span class="badge lv-oaza">oaza</span>町字</span>
-          <span class="row"
-            ><span class="badge lv-city">city</span>市区町村</span
-          >
-          <span class="row"
-            ><span class="badge lv-pref">pref</span>都道府県</span
-          >
-          <span class="t">accuracy — その座標の品質</span>
-          <span class="row"><code>surveyed</code> 測量済み。実測点</span>
-          <span class="row"
-            ><code>legacy</code> 公図由来。数十m〜百mずれうる</span
-          >
-          <span class="row"
-            ><code>representative</code> 代表点。探した対象の点ではない</span
-          >
+          <div class="navgroup">駅・路線</div>
+          <button class="navitem" data-panel="rail">
+            <span class="mono">nearestStationsByAddress()</span>
+          </button>
+          <button class="navitem" data-panel="line">
+            <span class="mono">listLines() / listStations()</span>
+          </button>
         </div>
-      </section>
 
-      <section id="tab-muni" hidden>
-        <div class="controls">
-          <select id="pref"></select>
-          <div class="seg" id="mode">
-            <button type="button" data-mode="wards" class="on">wards</button>
-            <button type="button" data-mode="nested">nested</button>
+        <div class="sidebar-bottom">
+          <div class="sidefoot">
+            <a href="https://github.com/NAOHIDEOTA/jp-geocoder">GitHub</a>
           </div>
         </div>
-        <p class="hint">
-          <code>designatedCity</code>
-          は<strong>政令指定都市20市の見せ方だけ</strong>を 切り替えます。<code
-            >wards</code
-          >
-          は行政区ごとに1件（横浜市なら18件並ぶ）、
-          <code>nested</code> は市1件に区をまとめます。
-          特別区・郡部の町村・通常の市は
-          どちらでも同じ形です。郡名は含めません（「三浦郡葉山町」ではなく「葉山町」）。
-        </p>
+      </aside>
 
-        <div class="status" id="muni-status"></div>
+      <!-- ------------------------------------------------------ 本文 -->
+      <main class="main">
+        <!-- geocode -->
+        <section id="p-geo">
+          <div class="phead">
+            <h1>geocode()</h1>
+            <p>
+              住所を緯度経度にします。表記ゆれ・タイポ・旧市町村名も解決します。
+            </p>
+            <code class="sig"
+              >geocode(address: string): Promise&lt;GeocodeResult&gt;</code
+            >
+          </div>
 
-        <div class="wrap">
-          <div id="muni-out" class="empty">都道府県を選んでください。</div>
+          <div class="console">
+            <span class="clabel">住所を入力</span>
+            <div>
+              <form id="gform" class="row">
+                <input
+                  id="gq"
+                  type="search"
+                  placeholder="東京都世田谷区太子堂5-5-5"
+                  autocomplete="off"
+                />
+                <button class="btn" type="submit">検索</button>
+              </form>
+              <div class="chips" id="gsamples"></div>
+            </div>
+          </div>
+          <div class="split">
+            <div class="map" id="gmap"></div>
+            <div class="rescol">
+              <div class="result placeholder" id="gresult"></div>
+              <div class="card">
+                <div class="scroll">
+                  <div id="gout" class="empty">
+                    <span class="ico">📍</span
+                    >住所を入力すると、ここに結果が出ます
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <details class="refbox">
+            <summary>引数・レスポンス・読み方</summary>
+            
+            <section class="refsec">
+              <h3 class="refh">引数</h3>
+              <div class="reftable"><table class="ref">
+                <thead>
+                  <tr>
+                    <th>名前</th>
+                    <th>型</th>
+                    <th>既定</th>
+                    <th>説明</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td class="name">address<span class="req">必須</span></td>
+                    <td class="type">string</td>
+                    <td class="def">—</td>
+                    <td class="desc">
+                      住所文字列。都道府県の省略・表記ゆれ・カナ入力・タイポ・旧市町村名を許容します。
+                    </td>
+                  </tr>
+                </tbody>
+              </table></div>
+                        </section>
+
+            
+            <section class="refsec">
+              <h3 class="refh">レスポンス</h3>
+              <h4 class="refsub">GeocodeResult</h4>
+              <div class="reftable"><table class="ref">
+                <thead>
+                  <tr>
+                    <th>名前</th>
+                    <th>型</th>
+                    <th>既定</th>
+                    <th>説明</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td class="name">candidates</td>
+                    <td class="type">Candidate[]</td>
+                    <td class="def">—</td>
+                    <td class="desc">候補。解決の深さとスコアの順。</td>
+                  </tr>
+                  <tr>
+                    <td class="name">attribution</td>
+                    <td class="type">string[]</td>
+                    <td class="def">—</td>
+                    <td class="desc">出典表示。表示義務があります。</td>
+                  </tr>
+                </tbody>
+              </table></div>
+              <h4 class="refsub">Candidate</h4>
+              <div class="reftable"><table class="ref">
+                <thead>
+                  <tr>
+                    <th>名前</th>
+                    <th>型</th>
+                    <th>既定</th>
+                    <th>説明</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td class="name">address</td>
+                    <td class="type">string</td>
+                    <td class="def">—</td>
+                    <td class="desc">正規化された住所表記。</td>
+                  </tr>
+                  <tr>
+                    <td class="name">lat / lng</td>
+                    <td class="type">number</td>
+                    <td class="def">—</td>
+                    <td class="desc">緯度経度（JGD2011）。</td>
+                  </tr>
+                  <tr>
+                    <td class="name">matchLevel</td>
+                    <td class="type">
+                      'rsdt' | 'block' | 'parcel' | 'oaza' | 'city' | 'pref'
+                    </td>
+                    <td class="def">—</td>
+                    <td class="desc">どこまで解決できたか。</td>
+                  </tr>
+                  <tr>
+                    <td class="name">accuracy</td>
+                    <td class="type">
+                      'surveyed' | 'legacy' | 'representative'
+                    </td>
+                    <td class="def">—</td>
+                    <td class="desc">その座標の品質。</td>
+                  </tr>
+                  <tr>
+                    <td class="name">score</td>
+                    <td class="type">number</td>
+                    <td class="def">—</td>
+                    <td class="desc">
+                      一致率 0〜1。完全一致 1.0 / カナ 0.9 / タイポ 0.6。
+                    </td>
+                  </tr>
+                  <tr>
+                    <td class="name">system</td>
+                    <td class="type">'residential' | 'parcel'</td>
+                    <td class="def">—</td>
+                    <td class="desc">住居表示系か地番系か。</td>
+                  </tr>
+                  <tr>
+                    <td class="name">components</td>
+                    <td class="type">AddressComponents</td>
+                    <td class="def">—</td>
+                    <td class="desc">
+                      住所の分割結果（pref / city / oaza / chome / block / rsdt
+                      など）。
+                    </td>
+                  </tr>
+                  <tr>
+                    <td class="name">building</td>
+                    <td class="type">string?</td>
+                    <td class="def">—</td>
+                    <td class="desc">切り離した建物名・部屋番号。</td>
+                  </tr>
+                  <tr>
+                    <td class="name">machiazaId</td>
+                    <td class="type">string?</td>
+                    <td class="def">—</td>
+                    <td class="desc">
+                      町字ID。住所文字列より安定した不変キー。
+                    </td>
+                  </tr>
+                </tbody>
+              </table></div>
+                        </section>
+
+            
+            <section class="refsec">
+              <h3 class="refh">読み方</h3>
+              <div class="legend">
+                <span class="lt">matchLevel — どこまで解決できたか</span>
+                <span
+                  ><span class="badge lv-rsdt">rsdt</span> 号（住居表示）</span
+                >
+                <span
+                  ><span class="badge lv-block">block</span> 番（街区）</span
+                >
+                <span
+                  ><span class="badge lv-parcel">parcel</span> 筆（地番）</span
+                >
+                <span><span class="badge lv-oaza">oaza</span> 町字</span>
+                <span><span class="badge lv-city">city</span> 市区町村</span>
+                <span><span class="badge lv-pref">pref</span> 都道府県</span>
+                <span class="lt">accuracy — その座標の品質</span>
+                <span><code>surveyed</code> 実測点</span>
+                <span><code>legacy</code> 公図由来。数十m ずれうる</span>
+                <span
+                  ><code>representative</code> 代表点。目的地の点ではない</span
+                >
+              </div>
+                        </section>
+
+          </details>
+        </section>
+
+        <!-- listPrefectures -->
+        <section id="p-pref" hidden>
+          <div class="phead">
+            <h1>listPrefectures()</h1>
+            <p>都道府県47件を取ります。代表点の緯度経度つき。</p>
+            <code class="sig"
+              >listPrefectures(): Promise&lt;PrefecturesResult&gt;</code
+            >
+          </div>
+
+          <div class="console">
+            <span class="clabel">実行</span>
+            <div>
+              <div class="row">
+                <button class="btn" type="button" id="prun">実行する</button>
+                <span class="meta">引数はありません。</span>
+              </div>
+            </div>
+          </div>
+          <div class="split">
+            <div class="map" id="pmap"></div>
+            <div class="rescol">
+              <div class="result placeholder" id="presult"></div>
+              <div class="card">
+                <div class="scroll">
+                  <div id="pout" class="empty">
+                    <span class="ico">🗾</span
+                    >「実行する」を押すと、ここに結果が出ます
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <details class="refbox">
+            <summary>引数・レスポンス</summary>
+            
+            <section class="refsec">
+              <h3 class="refh">引数</h3>
+              <div class="reftable"><table class="ref">
+                <thead>
+                  <tr>
+                    <th>名前</th>
+                    <th>型</th>
+                    <th>既定</th>
+                    <th>説明</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td class="name">—</td>
+                    <td class="type">—</td>
+                    <td class="def">—</td>
+                    <td class="desc">引数はありません。</td>
+                  </tr>
+                </tbody>
+              </table></div>
+                        </section>
+
+
+            
+            <section class="refsec">
+              <h3 class="refh">レスポンス</h3>
+              <h4 class="refsub">PrefecturesResult</h4>
+              <div class="reftable"><table class="ref">
+                <thead>
+                  <tr>
+                    <th>名前</th>
+                    <th>型</th>
+                    <th>既定</th>
+                    <th>説明</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td class="name">prefectures</td>
+                    <td class="type">Prefecture[]</td>
+                    <td class="def">—</td>
+                    <td class="desc">都道府県コード順。47件。</td>
+                  </tr>
+                  <tr>
+                    <td class="name">attribution</td>
+                    <td class="type">string[]</td>
+                    <td class="def">—</td>
+                    <td class="desc">出典表示。</td>
+                  </tr>
+                </tbody>
+              </table></div>
+              <h4 class="refsub">Prefecture</h4>
+              <div class="reftable"><table class="ref">
+                <thead>
+                  <tr>
+                    <th>名前</th>
+                    <th>型</th>
+                    <th>既定</th>
+                    <th>説明</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td class="name">code</td>
+                    <td class="type">string</td>
+                    <td class="def">—</td>
+                    <td class="desc">都道府県コード2桁（"01"〜"47"）。</td>
+                  </tr>
+                  <tr>
+                    <td class="name">name</td>
+                    <td class="type">string</td>
+                    <td class="def">—</td>
+                    <td class="desc">都道府県名。</td>
+                  </tr>
+                  <tr>
+                    <td class="name">lat / lng</td>
+                    <td class="type">number</td>
+                    <td class="def">—</td>
+                    <td class="desc">代表点の緯度経度。</td>
+                  </tr>
+                </tbody>
+              </table></div>
+                        </section>
+
+          </details>
+        </section>
+
+        <!-- listMunicipalities -->
+        <section id="p-muni" hidden>
+          <div class="phead">
+            <h1>listMunicipalities()</h1>
+            <p>都道府県から市区町村を取ります。</p>
+            <code class="sig"
+              >listMunicipalities(pref, options?):
+              Promise&lt;MunicipalitiesResult&gt;</code
+            >
+          </div>
+
+          <div class="console">
+            <span class="clabel">都道府県を選ぶ</span>
+            <div>
+              <div class="row">
+                <select id="mpref"></select>
+                <div class="seg" id="mmode">
+                  <button type="button" data-mode="wards" class="on">
+                    wards
+                  </button>
+                  <button type="button" data-mode="nested">nested</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <p class="note">
+            切り替わるのは政令指定都市20市だけです。<code>wards</code>
+            は行政区ごとに1件（横浜市なら18件）、<code>nested</code>
+            は市1件に区をまとめます。郡名は含めません。
+          </p>
+          <div class="split">
+            <div class="map" id="mmap"></div>
+            <div class="rescol">
+              <div class="result placeholder" id="mresult"></div>
+              <div class="card">
+                <div class="scroll">
+                  <div id="mout" class="empty">
+                    <span class="ico">🏙</span
+                    >都道府県を選ぶと、ここに結果が出ます
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <details class="refbox">
+            <summary>引数・レスポンス</summary>
+            
+            <section class="refsec">
+              <h3 class="refh">引数</h3>
+              <div class="reftable"><table class="ref">
+                <thead>
+                  <tr>
+                    <th>名前</th>
+                    <th>型</th>
+                    <th>既定</th>
+                    <th>説明</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td class="name">pref<span class="req">必須</span></td>
+                    <td class="type">string | number</td>
+                    <td class="def">—</td>
+                    <td class="desc">
+                      コード（1〜47 / "01"）または名称（"神奈川県" /
+                      "神奈川"）。解決できなければ空配列を返します。
+                    </td>
+                  </tr>
+                  <tr>
+                    <td class="name">options.designatedCity</td>
+                    <td class="type">'wards' | 'nested'</td>
+                    <td class="def">'wards'</td>
+                    <td class="desc">政令指定都市20市の行政区の並べ方。</td>
+                  </tr>
+                </tbody>
+              </table></div>
+                        </section>
+
+            
+            <section class="refsec">
+              <h3 class="refh">レスポンス</h3>
+              <h4 class="refsub">MunicipalitiesResult</h4>
+              <div class="reftable"><table class="ref">
+                <thead>
+                  <tr>
+                    <th>名前</th>
+                    <th>型</th>
+                    <th>既定</th>
+                    <th>説明</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td class="name">municipalities</td>
+                    <td class="type">Municipality[]</td>
+                    <td class="def">—</td>
+                    <td class="desc">団体コード順。</td>
+                  </tr>
+                  <tr>
+                    <td class="name">attribution</td>
+                    <td class="type">string[]</td>
+                    <td class="def">—</td>
+                    <td class="desc">出典表示。</td>
+                  </tr>
+                </tbody>
+              </table></div>
+              <h4 class="refsub">Municipality</h4>
+              <div class="reftable"><table class="ref">
+                <thead>
+                  <tr>
+                    <th>名前</th>
+                    <th>型</th>
+                    <th>既定</th>
+                    <th>説明</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td class="name">municipality</td>
+                    <td class="type">string</td>
+                    <td class="def">—</td>
+                    <td class="desc">
+                      市区町村名。行政区の場合は市名（"横浜市"）。
+                    </td>
+                  </tr>
+                  <tr>
+                    <td class="name">ward</td>
+                    <td class="type">string[]?</td>
+                    <td class="def">—</td>
+                    <td class="desc">
+                      政令指定都市の行政区。政令市以外では省略されます。
+                    </td>
+                  </tr>
+                  <tr>
+                    <td class="name">lat / lng</td>
+                    <td class="type">number</td>
+                    <td class="def">—</td>
+                    <td class="desc">
+                      代表点。この1件が指す団体のものです。<code>wards</code>
+                      なら行政区（横浜市鶴見区）、<code>nested</code>
+                      なら市そのもの（横浜市）の点になります。
+                    </td>
+                  </tr>
+                </tbody>
+              </table></div>
+                        </section>
+
+          </details>
+        </section>
+
+        <!-- nearestStationsByAddress -->
+        <section id="p-rail" hidden>
+          <div class="phead">
+            <h1>nearestStationsByAddress()</h1>
+            <p>住所から最寄り駅を取ります。全国10,465駅。</p>
+            <code class="sig"
+              >nearestStationsByAddress(address, options?):
+              Promise&lt;…&gt;</code
+            >
+          </div>
+
+          <div class="console">
+            <span class="clabel">住所を入力</span>
+            <div>
+              <form id="rform" class="row">
+                <input
+                  id="rq"
+                  type="search"
+                  placeholder="東京都世田谷区太子堂5-5-5"
+                  autocomplete="off"
+                />
+                <button class="btn" type="submit">検索</button>
+              </form>
+              <div class="chips" id="rsamples"></div>
+              <div class="row" style="margin-top: 0.7rem">
+                <label class="check"
+                  ><input type="checkbox" id="rgroup" checked />
+                  乗換駅をまとめる （<span class="mono">groupByStation</span
+                  >）</label
+                >
+              </div>
+            </div>
+          </div>
+          <div class="split">
+            <div class="map" id="rmap"></div>
+            <div class="rescol">
+              <div class="result placeholder" id="rresult"></div>
+              <div class="card">
+                <div class="scroll">
+                  <div id="rout" class="empty">
+                    <span class="ico">🚉</span
+                    >住所を入力すると、ここに結果が出ます
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <details class="refbox">
+            <summary>引数・レスポンス</summary>
+            
+            <section class="refsec">
+              <h3 class="refh">引数</h3>
+              <div class="reftable"><table class="ref">
+                <thead>
+                  <tr>
+                    <th>名前</th>
+                    <th>型</th>
+                    <th>既定</th>
+                    <th>説明</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td class="name">address<span class="req">必須</span></td>
+                    <td class="type">string</td>
+                    <td class="def">—</td>
+                    <td class="desc">
+                      住所文字列。内部で geocode() に渡します。
+                    </td>
+                  </tr>
+                  <tr>
+                    <td class="name">options.limit</td>
+                    <td class="type">number</td>
+                    <td class="def">10</td>
+                    <td class="desc">返す件数。</td>
+                  </tr>
+                  <tr>
+                    <td class="name">options.groupByStation</td>
+                    <td class="type">boolean</td>
+                    <td class="def">false</td>
+                    <td class="desc">
+                      乗換駅を1件にまとめるか。false
+                      だと乗り入れ路線の数だけ並びます。
+                    </td>
+                  </tr>
+                  <tr>
+                    <td class="name">options.maxDistance</td>
+                    <td class="type">number?</td>
+                    <td class="def">—</td>
+                    <td class="desc">この距離[m]より遠い駅を返しません。</td>
+                  </tr>
+                </tbody>
+              </table></div>
+                        </section>
+
+            
+            <section class="refsec">
+              <h3 class="refh">レスポンス</h3>
+              <div class="reftable"><table class="ref">
+                <thead>
+                  <tr>
+                    <th>名前</th>
+                    <th>型</th>
+                    <th>既定</th>
+                    <th>説明</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td class="name">candidate</td>
+                    <td class="type">Candidate | null</td>
+                    <td class="def">—</td>
+                    <td class="desc">
+                      住所の解決結果。解決できなければ null。
+                    </td>
+                  </tr>
+                  <tr>
+                    <td class="name">stations</td>
+                    <td class="type">NearbyStation[]</td>
+                    <td class="def">—</td>
+                    <td class="desc">近い順。</td>
+                  </tr>
+                  <tr>
+                    <td class="name">attribution</td>
+                    <td class="type">string[]</td>
+                    <td class="def">—</td>
+                    <td class="desc">出典表示。</td>
+                  </tr>
+                </tbody>
+              </table></div>
+              <h4 class="refsub">NearbyStation</h4>
+              <div class="reftable"><table class="ref">
+                <thead>
+                  <tr>
+                    <th>名前</th>
+                    <th>型</th>
+                    <th>既定</th>
+                    <th>説明</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td class="name">station</td>
+                    <td class="type">Station</td>
+                    <td class="def">—</td>
+                    <td class="desc">駅。</td>
+                  </tr>
+                  <tr>
+                    <td class="name">distance</td>
+                    <td class="type">number</td>
+                    <td class="def">—</td>
+                    <td class="desc">
+                      指定座標からの直線距離[m]。徒歩の経路距離ではありません。
+                    </td>
+                  </tr>
+                </tbody>
+              </table></div>
+              <h4 class="refsub">Station</h4>
+              <div class="reftable"><table class="ref">
+                <thead>
+                  <tr>
+                    <th>名前</th>
+                    <th>型</th>
+                    <th>既定</th>
+                    <th>説明</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td class="name">code</td>
+                    <td class="type">number</td>
+                    <td class="def">—</td>
+                    <td class="desc">駅コード。</td>
+                  </tr>
+                  <tr>
+                    <td class="name">groupCode</td>
+                    <td class="type">number</td>
+                    <td class="def">—</td>
+                    <td class="desc">
+                      同一駅グループ。乗換で結ばれる駅どうしで同じ値。
+                    </td>
+                  </tr>
+                  <tr>
+                    <td class="name">name</td>
+                    <td class="type">string</td>
+                    <td class="def">—</td>
+                    <td class="desc">駅名。</td>
+                  </tr>
+                  <tr>
+                    <td class="name">lineCode / lineName</td>
+                    <td class="type">number / string</td>
+                    <td class="def">—</td>
+                    <td class="desc">路線。</td>
+                  </tr>
+                  <tr>
+                    <td class="name">company</td>
+                    <td class="type">string</td>
+                    <td class="def">—</td>
+                    <td class="desc">事業者名。</td>
+                  </tr>
+                  <tr>
+                    <td class="name">pref</td>
+                    <td class="type">number</td>
+                    <td class="def">—</td>
+                    <td class="desc">都道府県コード 1〜47。</td>
+                  </tr>
+                  <tr>
+                    <td class="name">postalCode</td>
+                    <td class="type">string</td>
+                    <td class="def">—</td>
+                    <td class="desc">郵便番号（ハイフンなし7桁）。</td>
+                  </tr>
+                  <tr>
+                    <td class="name">address</td>
+                    <td class="type">string</td>
+                    <td class="def">—</td>
+                    <td class="desc">住所。</td>
+                  </tr>
+                  <tr>
+                    <td class="name">lat / lng</td>
+                    <td class="type">number</td>
+                    <td class="def">—</td>
+                    <td class="desc">緯度経度。</td>
+                  </tr>
+                </tbody>
+              </table></div>
+                        </section>
+
+          </details>
+        </section>
+
+        <!-- listLines / listStations -->
+        <section id="p-line" hidden>
+          <div class="phead">
+            <h1>listLines() / listStations()</h1>
+            <p>都道府県から路線、路線から駅を取ります。</p>
+            <code class="sig"
+              >listLines(pref) → listStations({ pref, line })</code
+            >
+          </div>
+
+          <div class="console">
+            <span class="clabel">都道府県 → 路線 の順に選ぶ</span>
+            <div>
+              <div class="row">
+                <select id="lpref"></select>
+                <select id="lline">
+                  <option value="">先に都道府県を選択</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <p class="note">
+            駅は路線順に並びます。分岐のある路線だけ、分岐箇所で順序が飛びます。
+          </p>
+          <div class="split">
+            <div class="map" id="lmap"></div>
+            <div class="rescol">
+              <div class="result placeholder" id="lresult"></div>
+              <div class="card">
+                <div class="scroll">
+                  <div id="lout" class="empty">
+                    <span class="ico">🚃</span
+                    >都道府県と路線を選ぶと、ここに結果が出ます
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <details class="refbox">
+            <summary>引数・レスポンス</summary>
+            
+            <section class="refsec">
+              <h3 class="refh">引数</h3>
+              <h4 class="refsub">listLines(pref)</h4>
+              <div class="reftable"><table class="ref">
+                <thead>
+                  <tr>
+                    <th>名前</th>
+                    <th>型</th>
+                    <th>既定</th>
+                    <th>説明</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td class="name">pref<span class="req">必須</span></td>
+                    <td class="type">string | number</td>
+                    <td class="def">—</td>
+                    <td class="desc">
+                      コードまたは名称。その都道府県に駅がある路線だけを返します。
+                    </td>
+                  </tr>
+                </tbody>
+              </table></div>
+              <h4 class="refsub">listStations(query?)</h4>
+              <div class="reftable"><table class="ref">
+                <thead>
+                  <tr>
+                    <th>名前</th>
+                    <th>型</th>
+                    <th>既定</th>
+                    <th>説明</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td class="name">query.pref</td>
+                    <td class="type">string | number?</td>
+                    <td class="def">—</td>
+                    <td class="desc">都道府県で絞り込み。省略すると全国。</td>
+                  </tr>
+                  <tr>
+                    <td class="name">query.line</td>
+                    <td class="type">number?</td>
+                    <td class="def">—</td>
+                    <td class="desc">路線コードで絞り込み。</td>
+                  </tr>
+                </tbody>
+              </table></div>
+                        </section>
+
+            
+            <section class="refsec">
+              <h3 class="refh">レスポンス</h3>
+              <h4 class="refsub">LinesResult</h4>
+              <div class="reftable"><table class="ref">
+                <thead>
+                  <tr>
+                    <th>名前</th>
+                    <th>型</th>
+                    <th>既定</th>
+                    <th>説明</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td class="name">lines</td>
+                    <td class="type">Line[]</td>
+                    <td class="def">—</td>
+                    <td class="desc">路線コード順。</td>
+                  </tr>
+                  <tr>
+                    <td class="name">attribution</td>
+                    <td class="type">string[]</td>
+                    <td class="def">—</td>
+                    <td class="desc">出典表示。</td>
+                  </tr>
+                </tbody>
+              </table></div>
+              <h4 class="refsub">Line</h4>
+              <div class="reftable"><table class="ref">
+                <thead>
+                  <tr>
+                    <th>名前</th>
+                    <th>型</th>
+                    <th>既定</th>
+                    <th>説明</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td class="name">code</td>
+                    <td class="type">number</td>
+                    <td class="def">—</td>
+                    <td class="desc">路線コード。</td>
+                  </tr>
+                  <tr>
+                    <td class="name">name</td>
+                    <td class="type">string</td>
+                    <td class="def">—</td>
+                    <td class="desc">路線名。</td>
+                  </tr>
+                  <tr>
+                    <td class="name">company</td>
+                    <td class="type">string</td>
+                    <td class="def">—</td>
+                    <td class="desc">事業者名。</td>
+                  </tr>
+                </tbody>
+              </table></div>
+              <h4 class="refsub">StationsResult</h4>
+              <div class="reftable"><table class="ref">
+                <thead>
+                  <tr>
+                    <th>名前</th>
+                    <th>型</th>
+                    <th>既定</th>
+                    <th>説明</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td class="name">stations</td>
+                    <td class="type">Station[]</td>
+                    <td class="def">—</td>
+                    <td class="desc">路線上の並び順。</td>
+                  </tr>
+                  <tr>
+                    <td class="name">attribution</td>
+                    <td class="type">string[]</td>
+                    <td class="def">—</td>
+                    <td class="desc">出典表示。</td>
+                  </tr>
+                </tbody>
+              </table></div>
+                        </section>
+
+          </details>
+        </section>
+      </main>
+
+      <!-- ------------------------------------------------------ レスポンス -->
+      <aside class="codepane">
+        <div class="codehead">
+          <span>Request</span><span class="who">JavaScript</span>
         </div>
-
-        <details class="raw" open>
-          <summary>レスポンス JSON</summary>
-          <pre id="muni-raw"></pre>
-        </details>
-      </section>
-
-      <section id="tab-rail" hidden>
-        <form id="rf">
-          <input
-            id="rq"
-            type="search"
-            placeholder="東京都世田谷区太子堂5-5-5"
-            autocomplete="off"
-          />
-          <button type="submit">検索</button>
-        </form>
-
-        <div class="samples" id="rsamples"></div>
-
-        <div class="controls">
-          <label class="hint" style="margin: 0">
-            <input type="checkbox" id="rgroup" checked style="width: auto" />
-            乗換駅をまとめる（groupByStation）
-          </label>
+        <pre id="req"><code id="reqcode"></code></pre>
+        <div class="codehead">
+          <span>Response</span><span class="who" id="codewho"></span>
         </div>
-
-        <div class="status" id="rail-status"></div>
-        <div id="rmap"></div>
-
-        <div class="wrap">
-          <div id="rail-out" class="empty">住所を入力してください。</div>
-        </div>
-
-        <details class="raw" open>
-          <summary>レスポンス JSON</summary>
-          <pre id="rail-raw"></pre>
-        </details>
-      </section>
-
-      <section id="tab-line" hidden>
-        <div class="controls">
-          <select id="lpref"></select>
-          <select id="lline"><option value="">先に都道府県を選択</option></select>
-        </div>
-        <p class="hint">
-          路線の一覧はその都道府県に駅がある路線だけを返します。駅は
-          <strong>路線上の並び順</strong>で出ます（駅コード順ではありません。
-          後からできた駅が末尾に付いてしまうため）。分岐のある路線
-          （鶴見線の海芝浦支線など）は1本の列に並べられないので、その箇所だけ順序が飛びます。
-        </p>
-
-        <div class="status" id="line-status"></div>
-        <div id="lmap"></div>
-
-        <div class="wrap">
-          <div id="line-out" class="empty">都道府県を選んでください。</div>
-        </div>
-
-        <details class="raw" open>
-          <summary>レスポンス JSON</summary>
-          <pre id="line-raw"></pre>
-        </details>
-      </section>
-
-      <footer>
-        このページはビルド済みの <code>lib/</code> をそのまま読み込み、データは
-        CDN 上の静的 JSON
-        から取っています。検索のたびに何ファイル取りに行ったかは 結果行の
-        <code>fetch</code> に出ます（一度読んだものは再取得しません）。
-        <br />
-        出典: デジタル庁 アドレス・ベース・レジストリ / 国土交通省 位置参照情報
-        —
-        <a
-          href="https://github.com/NAOHIDEOTA/jp-geocoder/blob/master/DATA_LICENSE.md"
-          >DATA_LICENSE.md</a
-        >
-        / 地図: © OpenStreetMap contributors
-      </footer>
-    </main>
+        <pre><code id="code">// 実行するとここに JSON が出ます</code></pre>
+      </aside>
+    </div>
 
     <script
       src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
@@ -632,20 +1864,16 @@
     <script type="module">
       /**
        * ライブラリは同じ場所の lib/（dist のコピー。make demo が更新する）。
-       * データは Cloudflare Pages から取る。
+       * データは既定で公式の配信元から。?base=... で差し替えられる。
        */
       const LIB = "./lib/index.js";
-      /**
-       * 既定は本番の配信元。?base=... で差し替えられるようにしてある
-       * （未配信のファイルをローカルで確認するとき用）。
-       */
       const BASE =
         new URLSearchParams(location.search).get("base") ??
         "https://jp-geocoder.pages.dev/v1";
 
       const { createGeocoder, PREFECTURES } = await import(LIB);
 
-      // fetch 回数を測るための計装つき fetcher（DOC.md §1.2 の検証）
+      /** fetch 回数を数えるだけの薄い計装。一度読んだものは再取得しない */
       let fetchCount = 0;
       const memo = new Map();
       const fetcher = {
@@ -663,18 +1891,213 @@
           return hit;
         },
       };
-
       const geo = createGeocoder({ baseUrl: BASE, fetcher, limit: 5 });
 
-      // ---------------------------------------------------------------- 地図
-      const map = L.map("map").setView([36.2, 137.5], 5); // 日本全体
-      L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
-        attribution: "&copy; OpenStreetMap contributors",
-        maxZoom: 19,
-      }).addTo(map);
-      let marker = null;
+      const $ = (id) => document.getElementById(id);
 
-      /** matchLevel に応じたズーム。粗い解決で寄りすぎない */
+      /** 画面に出す日本語。生のフィールド名は右の Response で見られる */
+      const LEVEL_JA = {
+        rsdt: "号まで特定",
+        block: "番まで特定",
+        parcel: "地番まで特定",
+        oaza: "町字まで特定",
+        city: "市区町村まで特定",
+        pref: "都道府県まで特定",
+      };
+      const ACC_JA = {
+        surveyed: "実測点",
+        legacy: "公図由来",
+        representative: "代表点",
+      };
+      const esc = (s) =>
+        String(s ?? "").replace(
+          /[&<>"]/g,
+          (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c],
+        );
+
+      // ---------------------------------------------------- レスポンスパネル
+      const codeEl = $("code");
+      const codeWho = $("codewho");
+      /** JSON に色を付ける。文字参照だけ先に潰してから字句を包む */
+      function paint(value) {
+        const src = JSON.stringify(value, null, 2).replace(
+          /[&<>]/g,
+          (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" })[c],
+        );
+        return src.replace(
+          /("(?:\\.|[^"\\])*"\s*:)|("(?:\\.|[^"\\])*")|(\b-?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?\b)|\b(true|false|null)\b/g,
+          (m, key, str, num, bool) => {
+            if (key) return `<span class="k">${key}</span>`;
+            if (str) return `<span class="s">${str}</span>`;
+            if (num) return `<span class="n">${num}</span>`;
+            return `<span class="b">${bool}</span>`;
+          },
+        );
+      }
+      /** JavaScript の抜粋に色を付ける（この画面の見た目専用の簡易版） */
+      function paintJs(src) {
+        return src
+          .replace(
+            /[&<>]/g,
+            (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" })[c],
+          )
+          .replace(/(\/\/[^\n]*)/g, '<span class="cm">$1</span>')
+          .replace(/("(?:\\.|[^"\\])*")/g, '<span class="s">$1</span>')
+          .replace(
+            /\b(import|from|const|await|true|false|null)\b/g,
+            '<span class="kw">$1</span>',
+          )
+          .replace(/\.(\w+)\(/g, '.<span class="fn">$1</span>(')
+          .replace(/\b(\d+)\b/g, '<span class="n">$1</span>');
+      }
+      const reqEl = $("reqcode");
+      function showReq(src) {
+        reqEl.innerHTML = paintJs(src.trim());
+      }
+      /** 文字列リテラルとして安全に埋め込む */
+      const lit = (v) => JSON.stringify(String(v ?? ""));
+
+      function showCode(who, value) {
+        codeWho.textContent = who;
+        codeEl.innerHTML = paint(value);
+      }
+      function showError(who, error) {
+        codeWho.textContent = who;
+        codeEl.textContent = String(error?.stack ?? error);
+      }
+
+      /**
+       * 実行結果の一行。表の外に置き、件数と条件、右端に所要時間を出す。
+       * 中身そのものは隣の表と地図が見せるので、ここでは繰り返さない。
+       */
+      function result(el, { lead, conds = [], cost = "" }) {
+        el.className = "result";
+        el.innerHTML =
+          `<span class="mark">✓</span><span class="lead2">${lead}</span>` +
+          conds
+            .filter(Boolean)
+            .map((c) => `<span class="cond">${c}</span>`)
+            .join("") +
+          (cost ? `<span class="cost">${cost}</span>` : "");
+      }
+      /** 実行前・結果なしの表示。塗りつぶした1枚にまとめる */
+      function empty(outEl, resEl, ico, text, ng = false) {
+        resEl.className = "result placeholder";
+        resEl.textContent = "";
+        outEl.className = ng ? "empty ng" : "empty";
+        outEl.innerHTML = `<span class="ico">${ico}</span>${text}`;
+      }
+      /** 失敗も同じ枠に出す */
+      function bad(outEl, resEl, text, detail = "") {
+        empty(outEl, resEl, "⚠️", `${text}<br>${detail}`, true);
+      }
+      /** 所要時間と fetch 回数。どの画面でも同じ形で出す */
+      const cost = (ms, n) => `${ms.toFixed(0)}ms ・ fetch ${n}回`;
+
+      /** 配信物が取れなかったときの共通表示。黙って何も起きない状態を作らない */
+      function fail(outEl, countEl, file, error) {
+        const msg = String(error?.message ?? error);
+        bad(
+          outEl,
+          countEl,
+          `${esc(file)} を読めません`,
+          /40\d/.test(msg)
+            ? `${file} がまだ配信されていません。`
+            : `${file} の取得に失敗しました。（${msg}）`,
+        );
+        showError(file, error);
+      }
+
+      // ------------------------------------------------ Request サンプル
+      const HEADER =
+        'import { createGeocoder } from "jp-geocoder";\n\nconst geocoder = createGeocoder();\n\n';
+      const REQ = {
+        geo: () =>
+          HEADER +
+          `const { candidates } = await geocoder.geocode(\n  ${lit($("gq").value || "東京都世田谷区太子堂5-5-5")},\n);`,
+        pref: () =>
+          HEADER + `const { prefectures } = await geocoder.listPrefectures();`,
+        muni: () => {
+          const name = prefName($("mpref").value) || "神奈川県";
+          return (
+            HEADER +
+            `const { municipalities } = await geocoder.listMunicipalities(\n` +
+            `  ${lit(name)},\n  { designatedCity: ${lit(muniMode)} },\n);`
+          );
+        },
+        rail: () =>
+          HEADER +
+          `const { candidate, stations } =\n  await geocoder.nearestStationsByAddress(\n` +
+          `    ${lit($("rq").value || "東京都世田谷区太子堂5-5-5")},\n` +
+          `    { limit: 8, groupByStation: ${$("rgroup").checked} },\n  );`,
+        line: () => {
+          const name = prefName($("lpref").value) || "東京都";
+          const line = $("lline").value;
+          return (
+            HEADER +
+            `const { lines } = await geocoder.listLines(${lit(name)});\n\n` +
+            `const { stations } = await geocoder.listStations({\n` +
+            `  pref: ${lit(name)},\n  line: ${line || 11302},\n});`
+          );
+        },
+      };
+      function syncReq(panel) {
+        showReq(REQ[panel]());
+      }
+
+      // ---------------------------------------------------------- 画面切替
+      const PANELS = ["geo", "pref", "muni", "rail", "line"];
+      const maps = {};
+      document.querySelectorAll(".navitem").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          document
+            .querySelectorAll(".navitem")
+            .forEach((b) => b.classList.toggle("on", b === btn));
+          const target = btn.dataset.panel;
+          for (const p of PANELS) $(`p-${p}`).hidden = p !== target;
+          // 隠れている間にサイズが変わるので測り直す
+          maps[target]?.invalidateSize();
+          syncReq(target);
+        });
+      });
+
+      function makeMap(id, center, zoom) {
+        const m = L.map(id).setView(center, zoom);
+        L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
+          attribution: "&copy; OpenStreetMap contributors",
+          maxZoom: 19,
+        }).addTo(m);
+        return m;
+      }
+      function chips(host, list, onPick) {
+        for (const t of list) {
+          const b = document.createElement("button");
+          b.type = "button";
+          b.className = "chip";
+          b.textContent = t;
+          b.addEventListener("click", () => onPick(t));
+          host.append(b);
+        }
+      }
+
+      // 都道府県セレクトはライブラリの PREFECTURES から作る
+      /** コードから都道府県名を引く。select の選択状態に依存させない */
+      const prefName = (code) =>
+        PREFECTURES.find(([c]) => c === String(code))?.[1] ?? "";
+
+      const prefOptions =
+        '<option value="">都道府県を選択</option>' +
+        PREFECTURES.map(
+          ([code, name]) => `<option value="${code}">${name}</option>`,
+        ).join("");
+      $("mpref").innerHTML = prefOptions;
+      $("lpref").innerHTML = prefOptions;
+
+      syncReq("geo");
+
+      // ============================================================ geocode
+      maps.geo = makeMap("gmap", [36.2, 137.5], 5);
+      let gMarker = null;
       const ZOOM = {
         rsdt: 17,
         block: 17,
@@ -685,102 +2108,21 @@
       };
 
       function pin(c) {
-        const pos = [c.lat, c.lng];
-        if (marker) marker.remove();
-        marker = L.marker(pos).addTo(map);
-        marker
+        if (gMarker) gMarker.remove();
+        gMarker = L.marker([c.lat, c.lng])
+          .addTo(maps.geo)
           .bindPopup(
-            `<b>${esc(c.address)}</b><br>` +
-              `${c.lat}, ${c.lng}<br>` +
-              `<code>${c.matchLevel} / ${c.accuracy}</code>`,
+            `<b>${esc(c.address)}</b><br>${c.lat}, ${c.lng}<br><code>${c.matchLevel} / ${c.accuracy}</code>`,
           )
           .openPopup();
-        map.flyTo(pos, ZOOM[c.matchLevel] ?? 14, { duration: 0.6 });
-      }
-
-      function unpin() {
-        if (marker) {
-          marker.remove();
-          marker = null;
-        }
-      }
-
-      // ---------------------------------------------------------------- UI
-      const q = document.getElementById("q");
-      const status = document.getElementById("status");
-      const out = document.getElementById("out");
-      const raw = document.getElementById("raw");
-
-      // あえて難しい入力を並べている。それぞれ別の解決機構の実演になっている
-      const SAMPLES = [
-        "世田ヶ谷区太子道5-5-5", // 二重タイポ（ヶ + 道→堂）
-        "世田谷区たいしどう5-5-5", // 町名がカナ
-        "東京都　世田谷区　太子堂５－５－５　キャロットタワー26F", // 全角・空白・建物名
-        "中央区銀座四丁目五番六号", // 漢数字
-        "清水市旭町6-8", // 消滅した市（→静岡市清水区）
-        "浦和市高砂3-15-1", // 旧市名（→さいたま市浦和区）
-        "京都市下京区四条通烏丸東入長刀鉾町", // 京都の通り名
-        "札幌市北区北12条西3丁目1-1", // 条丁目
-        "岩手県花巻市石鳥谷町好地第3地割20", // 岩手の地割
-        "沖縄県中頭郡北谷町字美浜16-2", // 字 + 地番
-        "存在しない住所テスト", // NG の見た目確認
-      ];
-      const box = document.getElementById("samples");
-      for (const s of SAMPLES) {
-        const b = document.createElement("button");
-        b.type = "button";
-        b.textContent = s;
-        b.addEventListener("click", () => {
-          q.value = s;
-          run(s);
+        maps.geo.flyTo([c.lat, c.lng], ZOOM[c.matchLevel] ?? 14, {
+          duration: 0.6,
         });
-        box.append(b);
       }
 
-      const esc = (s) =>
-        String(s ?? "").replace(
-          /[&<>"]/g,
-          (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c],
-        );
-
-      /**
-       * 配信物が取れなかったときの表示。
-       * 未配信のファイルがあると画面が沈黙してしまい原因が追えないので、
-       * どのファイルで失敗したかまで出す。
-       */
-      function fail(statusEl, outEl, rawEl, file, error) {
-        const msg = String(error?.message ?? error);
-        const notFound = /-> 40\d|404/.test(msg);
-        statusEl.innerHTML =
-          `<span class="chip err">✕ ${esc(file)} を読めません</span>` +
-          `<span class="detail">${esc(msg)}</span>`;
-        outEl.className = "empty";
-        outEl.textContent = notFound
-          ? `${file} がまだ配信されていません。make pages-deploy で配信するか、` +
-            `?base=/v1 のようにローカルの配信物を指定してください。`
-          : `${file} の取得に失敗しました。`;
-        rawEl.textContent = msg;
-      }
-
-      /** 入力欄とステータス行に OK / NG を反映する */
-      function setState(kind, text, detail = "") {
-        q.classList.toggle("is-ok", kind === "ok");
-        q.classList.toggle("is-error", kind === "error");
-        if (kind === "none") {
-          status.innerHTML = "";
-          return;
-        }
-        const cls = kind === "ok" ? "ok" : "err";
-        const icon = kind === "ok" ? "✓" : "✕";
-        status.innerHTML =
-          `<span class="chip ${cls}">${icon} ${esc(text)}</span>` +
-          (detail ? `<span class="detail">${esc(detail)}</span>` : "");
-      }
-
-      /** components（住所の分割結果）を「県 | 市 | 町 | 番地」のチップ列にする */
       function partsOf(c) {
         const p = c.components;
-        const items = [
+        return [
           ["pref", p.pref],
           ["county", p.county],
           ["city", p.city],
@@ -791,350 +2133,424 @@
           ["rsdt", p.rsdt != null ? `${p.rsdt}号` : null],
           ["parcel", p.parcel ? `${p.parcel.join("-")}番地` : null],
           ["building", c.building],
-        ].filter(([, v]) => v != null && v !== "");
-        return items
-          .map(
-            ([k, v]) =>
-              `<span class="part"><span class="k">${k}</span>${esc(v)}</span>`,
-          )
+        ]
+          .filter(([, v]) => v != null && v !== "")
+          .map(([k, v]) => `<span class="tag"><b>${k}</b>${esc(v)}</span>`)
           .join("");
       }
 
-      function renderTable(candidates) {
-        const rows = candidates
-          .map(
-            (c, i) => `
-          <tr data-i="${i}" class="${i === 0 ? "selected" : ""}">
-            <td class="addr">${esc(c.address)}
-              <div class="parts">${partsOf(c)}</div></td>
-            <td><code>${c.lat}, ${c.lng}</code></td>
-            <td><span class="badge lv-${esc(c.matchLevel)}">${esc(c.matchLevel)}</span></td>
-            <td>${esc(c.accuracy)}</td>
-            <td>${c.score}</td>
-          </tr>`,
-          )
-          .join("");
+      chips(
+        $("gsamples"),
+        [
+          "世田ヶ谷区太子道5-5-5",
+          "世田谷区たいしどう5-5-5",
+          "中央区銀座四丁目五番六号",
+          "清水市旭町6-8",
+          "浦和市高砂3-15-1",
+          "京都市下京区四条通烏丸東入長刀鉾町",
+          "札幌市北区北12条西3丁目1-1",
+          "岩手県花巻市石鳥谷町好地第3地割20",
+          "存在しない住所テスト",
+        ],
+        (t) => {
+          $("gq").value = t;
+          runGeo(t);
+        },
+      );
+
+      let gseq = 0;
+      async function runGeo(text) {
+        syncReq("geo");
+        const input = text.trim();
+        const res2 = $("gresult"),
+          out = $("gout");
+        if (!input) {
+          empty(out, res2, "📍", "住所を入力すると、ここに結果が出ます");
+          return;
+        }
+        const my = ++gseq,
+          before = fetchCount,
+          t0 = performance.now();
+        let res;
+        try {
+          res = await geo.geocode(input);
+        } catch (e) {
+          if (my !== gseq) return;
+          fail(out, res2, "配信データ", e);
+          return;
+        }
+        if (my !== gseq) return;
+        const ms = performance.now() - t0;
+        showCode("geocode()", res);
+
+        const c = res.candidates[0];
+        if (!c) {
+          empty(
+            out,
+            res2,
+            "🔍",
+            "住所を解決できませんでした<br>入力を確認してください",
+            true,
+          );
+
+          return;
+        }
+        result(res2, {
+          lead: `候補 ${res.candidates.length}件`,
+          conds: [
+            LEVEL_JA[c.matchLevel] ?? c.matchLevel,
+            ACC_JA[c.accuracy] ?? c.accuracy,
+            `一致率 ${Math.round(c.score * 100)}%`,
+          ],
+          cost: cost(ms, fetchCount - before),
+        });
+        pin(c);
+
         out.className = "";
         out.innerHTML = `<table>
-          <thead><tr><th>住所（分割結果つき）</th><th>緯度経度</th><th>matchLevel</th><th>accuracy</th><th>score</th></tr></thead>
-          <tbody>${rows}</tbody></table>`;
-
-        // 行クリックでその候補にピンを立て直す
+          <thead><tr><th>住所</th><th>緯度経度</th><th>どこまで特定できたか</th><th>座標の品質</th><th>一致率</th></tr></thead>
+          <tbody>${res.candidates
+            .map(
+              (
+                x,
+                i,
+              ) => `<tr class="click ${i === 0 ? "sel" : ""}" data-i="${i}">
+                <td class="wide">${esc(x.address)}<div class="tags">${partsOf(x)}</div></td>
+                <td class="mono">${x.lat}, ${x.lng}</td>
+                <td><span class="badge lv-${esc(x.matchLevel)}">${esc(LEVEL_JA[x.matchLevel] ?? x.matchLevel)}</span></td>
+                <td>${esc(ACC_JA[x.accuracy] ?? x.accuracy)}</td>
+                <td class="num">${Math.round(x.score * 100)}%</td>
+              </tr>`,
+            )
+            .join("")}</tbody></table>`;
         out.querySelectorAll("tbody tr").forEach((tr) => {
           tr.addEventListener("click", () => {
             out
-              .querySelectorAll("tr.selected")
-              .forEach((x) => x.classList.remove("selected"));
-            tr.classList.add("selected");
-            pin(candidates[Number(tr.dataset.i)]);
+              .querySelectorAll("tr.sel")
+              .forEach((x) => x.classList.remove("sel"));
+            tr.classList.add("sel");
+            pin(res.candidates[Number(tr.dataset.i)]);
           });
         });
       }
 
-      let seq = 0;
-      async function run(text) {
-        const input = text.trim();
-        if (!input) {
-          setState("none");
-          unpin();
-          out.className = "empty";
-          out.textContent = "住所を入力してください。";
-          return;
-        }
-        const my = ++seq;
-        const before = fetchCount;
-        const t = performance.now();
-        let result;
+      let gtimer = null;
+      $("gq").addEventListener("input", () => {
+        clearTimeout(gtimer);
+        gtimer = setTimeout(() => runGeo($("gq").value), 500);
+      });
+      $("gform").addEventListener("submit", (e) => {
+        e.preventDefault();
+        clearTimeout(gtimer);
+        runGeo($("gq").value);
+      });
+
+      // ===================================================== listPrefectures
+      maps.pref = makeMap("pmap", [36.5, 137.5], 4);
+      let pLayer = L.layerGroup().addTo(maps.pref);
+
+      $("prun").addEventListener("click", runPref);
+
+      async function runPref() {
+        syncReq("pref");
+        const res2 = $("presult"),
+          out = $("pout");
+        const before = fetchCount,
+          t0 = performance.now();
+        let res;
         try {
-          result = await geo.geocode(input);
+          res = await geo.listPrefectures();
         } catch (e) {
-          if (my !== seq) return;
-          setState("error", "検索に失敗しました", String(e.message ?? e));
-          unpin();
-          raw.textContent = String(e.stack ?? e);
+          fail(out, res2, "cities.json", e);
           return;
         }
-        if (my !== seq) return; // 古いクエリの結果は捨てる
+        const ms = performance.now() - t0;
+        showCode("listPrefectures()", res);
+        const list = res.prefectures;
+        result(res2, {
+          lead: `都道府県 ${list.length}件`,
+          conds: ["緯度経度つき"],
+          cost: cost(ms, fetchCount - before),
+        });
 
-        const ms = performance.now() - t;
-        raw.textContent = JSON.stringify(result, null, 2);
-        const c = result.candidates[0];
-        if (!c) {
-          // NG: 解決できない = バリデーションエラーとして見せる
-          setState("error", "住所を解決できません", "入力を確認してください");
-          unpin();
-          out.className = "empty";
-          out.textContent = "候補なし。";
-          return;
+        pLayer.clearLayers();
+        for (const p of list) {
+          L.circleMarker([p.lat, p.lng], {
+            radius: 5,
+            color: "#bc002d",
+            fillColor: "#bc002d",
+            fillOpacity: 0.75,
+          })
+            .bindPopup(`<b>${esc(p.name)}</b><br>${p.lat}, ${p.lng}`)
+            .addTo(pLayer);
         }
 
-        // OK: 先頭候補に即ピン
-        setState(
-          "ok",
-          `${c.lat}, ${c.lng}`,
-          `${c.matchLevel}/${c.accuracy} / ${result.candidates.length}件 / ${ms.toFixed(0)}ms / fetch ${fetchCount - before}回`,
-        );
-        pin(c);
-        renderTable(result.candidates);
+        out.dataset.done = "1";
+        out.className = "";
+        out.innerHTML = `<table>
+          <thead><tr><th>コード</th><th>都道府県</th><th>緯度</th><th>経度</th></tr></thead>
+          <tbody>${list
+            .map(
+              (p) => `<tr class="click" data-lat="${p.lat}" data-lng="${p.lng}">
+                <td class="mono">${esc(p.code)}</td>
+                <td class="strong">${esc(p.name)}</td>
+                <td class="num mono">${p.lat.toFixed(6)}</td>
+                <td class="num mono">${p.lng.toFixed(6)}</td>
+              </tr>`,
+            )
+            .join("")}</tbody></table>`;
+        out.querySelectorAll("tbody tr").forEach((tr) => {
+          tr.addEventListener("click", () => {
+            out
+              .querySelectorAll("tr.sel")
+              .forEach((x) => x.classList.remove("sel"));
+            tr.classList.add("sel");
+            maps.pref.flyTo(
+              [Number(tr.dataset.lat), Number(tr.dataset.lng)],
+              9,
+              {
+                duration: 0.6,
+              },
+            );
+          });
+        });
       }
 
-      // 入力のたびに自動検索（500ms デバウンス）。Enter/ボタンは即時
-      let timer = null;
-      q.addEventListener("input", () => {
-        clearTimeout(timer);
-        timer = setTimeout(() => run(q.value), 500);
-      });
-      document.getElementById("f").addEventListener("submit", (e) => {
-        e.preventDefault();
-        clearTimeout(timer);
-        run(q.value);
-      });
+      // =================================================== listMunicipalities
+      maps.muni = makeMap("mmap", [35.44, 139.63], 9);
+      let mLayer = L.layerGroup().addTo(maps.muni);
 
-      // ------------------------------------------------------------ タブ切替
-      const tabs = document.getElementById("tabs");
-      tabs.addEventListener("click", (e) => {
-        const b = e.target.closest("button[data-tab]");
-        if (!b) return;
-        for (const x of tabs.querySelectorAll("button"))
-          x.classList.toggle("on", x === b);
-        for (const t of ["geo", "muni", "rail", "line"])
-          document.getElementById(`tab-${t}`).hidden = b.dataset.tab !== t;
-        // 隠れている間にサイズが変わっているので地図を測り直す
-        if (b.dataset.tab === "geo") map.invalidateSize();
-        if (b.dataset.tab === "rail") rmap.invalidateSize();
-        if (b.dataset.tab === "line") {
-          lmap.invalidateSize();
-          if (!lpref.value) {
-            lpref.value = "13";
-            runLines();
-          }
-        }
-        if (b.dataset.tab === "muni" && !prefSel.value) {
-          prefSel.value = "14";
-          runMuni();
-        }
-      });
-
-      // ------------------------------------------------ 都道府県 → 市区町村
-      const prefSel = document.getElementById("pref");
-      const muniStatus = document.getElementById("muni-status");
-      const muniOut = document.getElementById("muni-out");
-      const muniRaw = document.getElementById("muni-raw");
       let muniMode = "wards";
-
-      prefSel.innerHTML =
-        '<option value="">都道府県を選択</option>' +
-        PREFECTURES.map(
-          ([code, name]) => `<option value="${code}">${name}</option>`,
-        ).join("");
-
-      document.getElementById("mode").addEventListener("click", (e) => {
+      $("mmode").addEventListener("click", (e) => {
         const b = e.target.closest("button[data-mode]");
         if (!b) return;
         muniMode = b.dataset.mode;
-        for (const x of e.currentTarget.querySelectorAll("button"))
-          x.classList.toggle("on", x === b);
+        e.currentTarget
+          .querySelectorAll("button")
+          .forEach((x) => x.classList.toggle("on", x === b));
         runMuni();
       });
-      prefSel.addEventListener("change", runMuni);
+      $("mpref").addEventListener("change", runMuni);
 
       async function runMuni() {
-        const code = prefSel.value;
+        syncReq("muni");
+        const code = $("mpref").value;
+        const res2 = $("mresult"),
+          out = $("mout");
         if (!code) {
-          muniStatus.innerHTML = "";
-          muniOut.className = "empty";
-          muniOut.textContent = "都道府県を選んでください。";
-          muniRaw.textContent = "";
+          empty(out, res2, "🏙", "都道府県を選ぶと、ここに結果が出ます");
           return;
         }
-        const before = fetchCount;
-        const t = performance.now();
+        const before = fetchCount,
+          t0 = performance.now();
         let res;
         try {
           res = await geo.listMunicipalities(code, {
             designatedCity: muniMode,
           });
         } catch (e) {
-          // 配信物が取れないと黙って何も起きないので、必ず理由を出す
-          fail(muniStatus, muniOut, muniRaw, "cities.json", e);
+          fail(out, res2, "cities.json", e);
           return;
         }
-        const ms = performance.now() - t;
-        muniRaw.textContent = JSON.stringify(res, null, 2);
-
+        const ms = performance.now() - t0;
+        showCode("listMunicipalities()", res);
         const list = res.municipalities;
-        const wardCount = list.reduce((n, m) => n + (m.ward?.length ?? 0), 0);
-        muniStatus.innerHTML =
-          `<span class="chip ok">✓ ${list.length}件</span>` +
-          `<span class="detail">政令市の行政区 ${wardCount}件 / ` +
-          `${ms.toFixed(0)}ms / fetch ${fetchCount - before}回</span>`;
+        const wards = list.reduce((n, m) => n + (m.ward?.length ?? 0), 0);
+        const cities = list.filter((m) => m.ward).length;
+        result(res2, {
+          lead: `市区町村 ${list.length}件`,
+          conds: [
+            wards ? `行政区 ${wards}件` : "政令市なし",
+            muniMode === "nested" ? "市にまとめる" : "区ごとに出す",
+          ],
+          cost: cost(ms, fetchCount - before),
+        });
+        mLayer.clearLayers();
+        const pts = list.map((m) => [m.lat, m.lng]);
+        list.forEach((m, i) => {
+          L.circleMarker([m.lat, m.lng], {
+            radius: 5,
+            color: "#bc002d",
+            fillColor: "#bc002d",
+            fillOpacity: 0.75,
+          })
+            .bindPopup(
+              `<b>${esc(m.municipality)}${esc((m.ward ?? []).join("・"))}</b><br>${m.lat}, ${m.lng}`,
+            )
+            .addTo(mLayer);
+        });
+        if (pts.length) maps.muni.fitBounds(L.latLngBounds(pts).pad(0.1));
 
-        muniOut.className = "";
-        muniOut.innerHTML = `<table>
-          <thead><tr><th class="num">#</th><th>municipality</th><th>ward</th></tr></thead>
+        out.className = "";
+        out.innerHTML = `<table>
+          <thead><tr><th>#</th><th>市区町村</th><th>行政区</th><th>緯度</th><th>経度</th></tr></thead>
           <tbody>${list
             .map(
-              (m, i) => `<tr>
-              <td class="num">${i + 1}</td>
-              <td class="muni">${esc(m.municipality)}</td>
-              <td class="wcell"><div class="wards">${(m.ward ?? [])
-                .map((w) => `<span>${esc(w)}</span>`)
-                .join("")}</div></td>
-            </tr>`,
+              (
+                m,
+                i,
+              ) => `<tr class="click" data-lat="${m.lat}" data-lng="${m.lng}">
+                <td class="num">${i + 1}</td>
+                <td class="strong">${esc(m.municipality)}</td>
+                <td class="wide wardtags">${(m.ward ?? []).map((w) => `<span>${esc(w)}</span>`).join("")}</td>
+                <td class="num mono">${m.lat.toFixed(6)}</td>
+                <td class="num mono">${m.lng.toFixed(6)}</td>
+              </tr>`,
             )
             .join("")}</tbody></table>`;
-      }
-
-      // ------------------------------------------------ 住所 → 最寄り駅
-      const rmap = L.map("rmap").setView([35.6812, 139.7671], 13);
-      L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
-        attribution: "&copy; OpenStreetMap contributors",
-        maxZoom: 19,
-      }).addTo(rmap);
-      let rlayer = L.layerGroup().addTo(rmap);
-
-      const rq = document.getElementById("rq");
-      const railStatus = document.getElementById("rail-status");
-      const railOut = document.getElementById("rail-out");
-      const railRaw = document.getElementById("rail-raw");
-      const rgroup = document.getElementById("rgroup");
-
-      const RSAMPLES = [
-        "東京都世田谷区太子堂5-5-5",
-        "大阪府大阪市北区梅田3-1-3",
-        "北海道札幌市中央区北5条西2-5",
-        "福岡県福岡市中央区天神1-8-1",
-        "沖縄県那覇市おもろまち1-1-1",
-        "岩手県花巻市石鳥谷町好地第3地割20",
-      ];
-      const rbox = document.getElementById("rsamples");
-      for (const t of RSAMPLES) {
-        const b = document.createElement("button");
-        b.type = "button";
-        b.textContent = t;
-        b.addEventListener("click", () => {
-          rq.value = t;
-          runRail(t);
+        out.querySelectorAll("tbody tr").forEach((tr) => {
+          tr.addEventListener("click", () => {
+            out
+              .querySelectorAll("tr.sel")
+              .forEach((x) => x.classList.remove("sel"));
+            tr.classList.add("sel");
+            maps.muni.flyTo(
+              [Number(tr.dataset.lat), Number(tr.dataset.lng)],
+              12,
+              {
+                duration: 0.6,
+              },
+            );
+          });
         });
-        rbox.append(b);
       }
-      rgroup.addEventListener("change", () => rq.value && runRail(rq.value));
+
+      // ============================================ nearestStationsByAddress
+      maps.rail = makeMap("rmap", [35.6812, 139.7671], 13);
+      let rLayer = L.layerGroup().addTo(maps.rail);
+
+      chips(
+        $("rsamples"),
+        [
+          "東京都世田谷区太子堂5-5-5",
+          "大阪府大阪市北区梅田3-1-3",
+          "北海道札幌市中央区北5条西2-5",
+          "福岡県福岡市中央区天神1-8-1",
+          "沖縄県那覇市おもろまち1-1-1",
+        ],
+        (t) => {
+          $("rq").value = t;
+          runRail(t);
+        },
+      );
+      $("rgroup").addEventListener("change", () => {
+        if ($("rq").value) runRail($("rq").value);
+      });
+      $("rform").addEventListener("submit", (e) => {
+        e.preventDefault();
+        runRail($("rq").value);
+      });
 
       let rseq = 0;
       async function runRail(text) {
+        syncReq("rail");
         const input = text.trim();
         if (!input) return;
-        const my = ++rseq;
-        const before = fetchCount;
-        const t = performance.now();
+        const res2 = $("rresult"),
+          out = $("rout");
+        const my = ++rseq,
+          before = fetchCount,
+          t0 = performance.now();
         let res;
         try {
           res = await geo.nearestStationsByAddress(input, {
             limit: 8,
-            groupByStation: rgroup.checked,
+            groupByStation: $("rgroup").checked,
           });
         } catch (e) {
           if (my !== rseq) return;
-          rlayer.clearLayers();
-          fail(railStatus, railOut, railRaw, "rail.json", e);
+          rLayer.clearLayers();
+          fail(out, res2, "rail.json", e);
           return;
         }
         if (my !== rseq) return;
-        const ms = performance.now() - t;
-        railRaw.textContent = JSON.stringify(res, null, 2);
-        rlayer.clearLayers();
+        const ms = performance.now() - t0;
+        showCode("nearestStationsByAddress()", res);
+        rLayer.clearLayers();
 
         if (!res.candidate) {
-          railStatus.innerHTML =
-            '<span class="chip err">✕ 住所を解決できません</span>';
-          railOut.className = "empty";
-          railOut.textContent = "候補なし。";
+          empty(
+            out,
+            res2,
+            "🔍",
+            "住所を解決できませんでした<br>入力を確認してください",
+            true,
+          );
           return;
         }
         const { candidate: c, stations } = res;
-        railStatus.innerHTML =
-          `<span class="chip ok">✓ ${esc(c.address)}</span>` +
-          `<span class="detail">${c.matchLevel}/${c.accuracy} / 駅${stations.length}件 / ` +
-          `${ms.toFixed(0)}ms / fetch ${fetchCount - before}回</span>`;
+        const top = stations[0];
+        result(res2, {
+          lead: `最寄り駅 ${stations.length}件`,
+          conds: [
+            $("rgroup").checked ? "乗換駅をまとめる" : "路線ごと",
+            `起点は${LEVEL_JA[c.matchLevel] ?? c.matchLevel}`,
+          ],
+          cost: cost(ms, fetchCount - before),
+        });
 
-        // 起点（住所）と駅を地図に置く
+        const pts = [[c.lat, c.lng]];
         L.circleMarker([c.lat, c.lng], {
-          radius: 8,
-          color: "#dc2626",
-          fillOpacity: 0.9,
+          radius: 7,
+          color: "#bc002d",
+          fillColor: "#bc002d",
+          fillOpacity: 0.85,
         })
           .bindPopup(`<b>${esc(c.address)}</b>`)
-          .addTo(rlayer);
-        const pts = [[c.lat, c.lng]];
+          .addTo(rLayer);
         for (const { station: s, distance } of stations) {
           pts.push([s.lat, s.lng]);
           L.marker([s.lat, s.lng])
             .bindPopup(
               `<b>${esc(s.name)}</b><br>${esc(s.lineName)}<br>${Math.round(distance)}m`,
             )
-            .addTo(rlayer);
+            .addTo(rLayer);
           L.polyline(
             [
               [c.lat, c.lng],
               [s.lat, s.lng],
             ],
-            { color: "#7aa2ff", weight: 1, opacity: 0.6 },
-          ).addTo(rlayer);
+            {
+              color: "#bc002d",
+              weight: 1,
+              opacity: 0.5,
+            },
+          ).addTo(rLayer);
         }
-        rmap.fitBounds(L.latLngBounds(pts).pad(0.2));
+        maps.rail.fitBounds(L.latLngBounds(pts).pad(0.2));
 
-        railOut.className = "";
-        railOut.innerHTML = `<table>
-          <thead><tr><th class="num">距離</th><th>駅</th><th>路線</th><th>事業者</th><th>住所</th></tr></thead>
+        out.className = "";
+        out.innerHTML = `<table>
+          <thead><tr><th>距離</th><th>駅</th><th>路線</th><th>事業者</th><th>所在地</th></tr></thead>
           <tbody>${stations
             .map(
               ({ station: s, distance }) => `<tr>
-              <td class="num">${Math.round(distance).toLocaleString()}m</td>
-              <td class="muni">${esc(s.name)}</td>
-              <td>${esc(s.lineName)}</td>
-              <td>${esc(s.company)}</td>
-              <td class="addr">${esc(s.address)}</td>
-            </tr>`,
+                <td class="num">${Math.round(distance).toLocaleString()}m</td>
+                <td class="strong">${esc(s.name)}</td>
+                <td>${esc(s.lineName)}</td>
+                <td>${esc(s.company)}</td>
+                <td class="wide">${esc(s.address)}</td>
+              </tr>`,
             )
             .join("")}</tbody></table>`;
       }
 
-      document.getElementById("rf").addEventListener("submit", (e) => {
-        e.preventDefault();
-        runRail(rq.value);
-      });
+      // ================================================ listLines/listStations
+      maps.line = makeMap("lmap", [35.68, 139.76], 10);
+      let lLayer = L.layerGroup().addTo(maps.line);
 
-      // ------------------------------------------ 都道府県 → 路線 → 駅
-      const lmap = L.map("lmap").setView([35.68, 139.76], 10);
-      L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
-        attribution: "&copy; OpenStreetMap contributors",
-        maxZoom: 19,
-      }).addTo(lmap);
-      let llayer = L.layerGroup().addTo(lmap);
+      $("lpref").addEventListener("change", runLines);
+      $("lline").addEventListener("change", runLineStations);
 
-      const lpref = document.getElementById("lpref");
-      const lline = document.getElementById("lline");
-      const lineStatus = document.getElementById("line-status");
-      const lineOut = document.getElementById("line-out");
-      const lineRaw = document.getElementById("line-raw");
-
-      lpref.innerHTML =
-        '<option value="">都道府県を選択</option>' +
-        PREFECTURES.map(
-          ([code, name]) => `<option value="${code}">${name}</option>`,
-        ).join("");
-
-      lpref.addEventListener("change", runLines);
-      lline.addEventListener("change", runLineStations);
-
-      /** 都道府県 → 路線一覧をセレクトに詰める */
       async function runLines() {
-        const code = lpref.value;
-        llayer.clearLayers();
+        syncReq("line");
+        const code = $("lpref").value;
+        const res2 = $("lresult"),
+          out = $("lout");
+        lLayer.clearLayers();
         if (!code) {
-          lline.innerHTML = '<option value="">先に都道府県を選択</option>';
-          lineOut.className = "empty";
-          lineOut.textContent = "都道府県を選んでください。";
+          $("lline").innerHTML = '<option value="">先に都道府県を選択</option>';
+          empty(out, res2, "🚃", "都道府県と路線を選ぶと、ここに結果が出ます");
           return;
         }
         const before = fetchCount;
@@ -1142,10 +2558,11 @@
         try {
           res = await geo.listLines(code);
         } catch (e) {
-          fail(lineStatus, lineOut, lineRaw, "rail.json", e);
+          fail(out, res2, "rail.json", e);
           return;
         }
-        lline.innerHTML =
+        showCode("listLines()", res);
+        $("lline").innerHTML =
           `<option value="">路線を選択（${res.lines.length}件）</option>` +
           res.lines
             .map(
@@ -1153,72 +2570,72 @@
                 `<option value="${l.code}">${esc(l.name)}（${esc(l.company)}）</option>`,
             )
             .join("");
-        lineStatus.innerHTML =
-          `<span class="chip ok">✓ ${res.lines.length}路線</span>` +
-          `<span class="detail">fetch ${fetchCount - before}回</span>`;
-        lineOut.className = "empty";
-        lineOut.textContent = "路線を選んでください。";
-        lineRaw.textContent = JSON.stringify(res, null, 2);
+        result(res2, {
+          lead: `路線 ${res.lines.length}件`,
+          cost: `fetch ${fetchCount - before}回`,
+        });
+        empty(out, res2, "🚃", "路線を選ぶと、ここに駅が出ます");
       }
 
-      /** 路線 → その都道府県内の駅を路線順で出す */
       async function runLineStations() {
-        const line = Number(lline.value);
-        llayer.clearLayers();
+        syncReq("line");
+        const line = Number($("lline").value);
+        const res2 = $("lresult"),
+          out = $("lout");
+        lLayer.clearLayers();
         if (!line) return;
         const before = fetchCount;
         let res;
         try {
-          res = await geo.listStations({ pref: lpref.value, line });
+          res = await geo.listStations({ pref: $("lpref").value, line });
         } catch (e) {
-          fail(lineStatus, lineOut, lineRaw, "rail.json", e);
+          fail(out, res2, "rail.json", e);
           return;
         }
+        showCode("listStations()", res);
         const list = res.stations;
-        lineRaw.textContent = JSON.stringify(res, null, 2);
-        lineStatus.innerHTML =
-          `<span class="chip ok">✓ ${list.length}駅</span>` +
-          `<span class="detail">${esc(list[0]?.lineName ?? "")} / ` +
-          `${lpref.options[lpref.selectedIndex].text}内 / fetch ${fetchCount - before}回</span>`;
+        const selectedPref = prefName($("lpref").value);
+        result(res2, {
+          lead: `駅 ${list.length}件`,
+          conds: ["路線順"],
+          cost: `fetch ${fetchCount - before}回`,
+        });
 
         if (!list.length) {
-          lineOut.className = "empty";
-          lineOut.textContent = "この都道府県にこの路線の駅はありません。";
+          empty(out, res2, "🚃", "この都道府県にこの路線の駅はありません");
           return;
         }
 
-        // 路線順に線でつなぐ。並びが正しいか目で見て分かるようにする
         const pts = list.map((s) => [s.lat, s.lng]);
-        L.polyline(pts, { color: "#1d4ed8", weight: 3, opacity: 0.7 }).addTo(
-          llayer,
+        L.polyline(pts, { color: "#bc002d", weight: 3, opacity: 0.75 }).addTo(
+          lLayer,
         );
         list.forEach((s, i) => {
           L.circleMarker([s.lat, s.lng], {
             radius: 5,
-            color: "#1d4ed8",
+            color: "#bc002d",
             fillColor: "#fff",
             fillOpacity: 1,
           })
             .bindPopup(`<b>${i + 1}. ${esc(s.name)}</b><br>${esc(s.address)}`)
-            .addTo(llayer);
+            .addTo(lLayer);
         });
-        lmap.fitBounds(L.latLngBounds(pts).pad(0.1));
+        maps.line.fitBounds(L.latLngBounds(pts).pad(0.1));
 
-        lineOut.className = "";
-        lineOut.innerHTML = `<table>
-          <thead><tr><th class="num">#</th><th>駅</th><th>郵便番号</th><th>住所</th></tr></thead>
+        out.className = "";
+        out.innerHTML = `<table>
+          <thead><tr><th>#</th><th>駅</th><th>郵便番号</th><th>所在地</th></tr></thead>
           <tbody>${list
             .map(
               (s, i) => `<tr>
-              <td class="num">${i + 1}</td>
-              <td class="muni">${esc(s.name)}</td>
-              <td><code>${esc(s.postalCode.replace(/^(\d{3})(\d{4})$/, "$1-$2"))}</code></td>
-              <td class="addr">${esc(s.address)}</td>
-            </tr>`,
+                <td class="num">${i + 1}</td>
+                <td class="strong">${esc(s.name)}</td>
+                <td class="mono">${esc(s.postalCode.replace(/^(\d{3})(\d{4})$/, "$1-$2"))}</td>
+                <td class="wide">${esc(s.address)}</td>
+              </tr>`,
             )
             .join("")}</tbody></table>`;
       }
-
     </script>
   </body>
 </html>

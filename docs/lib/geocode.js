@@ -12,7 +12,7 @@ import { fuzzyPrefix } from "./core/distance.js";
 import { toKey, toExactKey } from "./core/normalize.js";
 import { consumePref, resolvePref } from "./core/pref.js";
 import { CityIndex } from "./core/cities.js";
-import { buildMunicipalities } from "./core/municipalities.js";
+import { buildMunicipalities, buildPrefectures, } from "./core/municipalities.js";
 import { RailIndex } from "./core/rail.js";
 import { parseTail } from "./core/banchi.js";
 import { lookupTown, isResidential, townChome, townCode, townId, townKoaza, townLat, townLng, townName, townOaza, } from "./core/towns.js";
@@ -406,6 +406,13 @@ export function createGeocoder(options = {}) {
             return {
                 candidates: scored.slice(0, limit).map((s) => s.candidate),
                 attribution,
+            };
+        },
+        async listPrefectures() {
+            const index = await loadIndex();
+            return {
+                prefectures: buildPrefectures(index.records),
+                attribution: [...CITY_ATTRIBUTION],
             };
         },
         async listMunicipalities(pref, options = {}) {

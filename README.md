@@ -116,6 +116,22 @@ const result = await geocoder.geocode("東京都世田谷区太子堂5-5-5");
 | `building`   | `string?` | 切り離した建物名・部屋番号                          |
 | `machiazaId` | `string?` | ABR の町字ID。住所文字列より安定した不変キー        |
 
+### `geocoder.listPrefectures()`
+
+都道府県47件を代表点の座標つきで返します。
+
+```ts
+const { prefectures } = await geocoder.listPrefectures();
+// [{ code: "01", name: "北海道", lat: 43.063941, lng: 141.347907 }, …]
+```
+
+名称だけで足りる場合は、fetch の要らない `PREFECTURES` 定数を使えます。
+
+```ts
+import { PREFECTURES } from "jp-geocoder";
+// [["01", "北海道"], ["02", "青森県"], …]
+```
+
 ### `geocoder.listMunicipalities(pref, options?)`
 
 都道府県に属する市区町村の一覧を返します（住所文字列の解決ではなく、選択肢を出すための機能）。
@@ -125,7 +141,7 @@ const result = await geocoder.geocode("東京都世田谷区太子堂5-5-5");
 
 ```ts
 const { municipalities } = await geocoder.listMunicipalities("神奈川県");
-// [{ municipality: "横浜市", ward: ["鶴見区"] }, … , { municipality: "葉山町" }]
+// [{ municipality: "横浜市", ward: ["鶴見区"], lat: 35.508398, lng: 139.682384 }, …]
 ```
 
 | Option           | Default   | Description                        |
@@ -146,6 +162,8 @@ const { municipalities } = await geocoder.listMunicipalities("神奈川県");
 - 郡名は含めません（「三浦郡葉山町」ではなく `"葉山町"`）
 - 東京23区は市と区に割らず単独で返します（`{municipality:"千代田区"}`）
 - 政令指定都市の本体だけの単独エントリは作りません（必ず `ward` つきで現れます）
+- `lat` / `lng` はその1件が指す団体の代表点です。`wards` なら行政区
+  （横浜市鶴見区）、`nested` なら市そのもの（横浜市）の点になります
 
 ### 駅・路線
 
@@ -272,6 +290,15 @@ interface MunicipalitiesResult {
 interface Municipality {
   municipality: string; // 行政区の場合は市名（"横浜市"）
   ward?: string[]; // 政令指定都市のみ
+  lat: number; // 代表点。この1件が指す団体のもの
+  lng: number;
+}
+
+interface Prefecture {
+  code: string; // "01"〜"47"
+  name: string;
+  lat: number;
+  lng: number;
 }
 
 interface MunicipalityOptions {

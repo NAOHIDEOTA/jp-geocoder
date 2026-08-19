@@ -9,41 +9,45 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 
-import { buildMunicipalities } from "../dist/core/municipalities.js";
+import {
+  buildMunicipalities,
+  buildPrefectures,
+} from "../dist/core/municipalities.js";
 import { resolvePref } from "../dist/core/pref.js";
 import { createGeocoder } from "../dist/geocode.js";
 
 /** cities.json の部分集合。政令市・特別区・郡部の町・通常の市を1つずつ含む */
 const RECORDS = [
-  { code: "13", pref: "13", name: "東京都", level: "pref", k: [], kk: [] },
-  { code: "131016", pref: "13", name: "千代田区", level: "special_ward", k: [], kk: [] },
-  { code: "133035", pref: "13", name: "瑞穂町", level: "city", county: "西多摩郡", k: [], kk: [] },
-  { code: "14", pref: "14", name: "神奈川県", level: "pref", k: [], kk: [] },
-  { code: "141003", pref: "14", name: "横浜市", level: "city", k: [], kk: [] },
-  { code: "141011", pref: "14", name: "横浜市鶴見区", level: "ward", parent: "141003", k: [], kk: [] },
-  { code: "141020", pref: "14", name: "横浜市神奈川区", level: "ward", parent: "141003", k: [], kk: [] },
-  { code: "141305", pref: "14", name: "川崎市", level: "city", k: [], kk: [] },
-  { code: "141313", pref: "14", name: "川崎市川崎区", level: "ward", parent: "141305", k: [], kk: [] },
-  { code: "142018", pref: "14", name: "横須賀市", level: "city", k: [], kk: [] },
-  { code: "143014", pref: "14", name: "葉山町", level: "city", county: "三浦郡", k: [], kk: [] },
+  { code: "13", pref: "13", name: "東京都", level: "pref", lat: 35.68, lng: 139.76, k: [], kk: [] },
+  { code: "131016", pref: "13", name: "千代田区", level: "special_ward", lat: 35.694, lng: 139.753, k: [], kk: [] },
+  { code: "133035", pref: "13", name: "瑞穂町", level: "city", county: "西多摩郡", lat: 35.771, lng: 139.353, k: [], kk: [] },
+  { code: "14", pref: "14", name: "神奈川県", level: "pref", lat: 35.44, lng: 139.63, k: [], kk: [] },
+  { code: "141003", pref: "14", name: "横浜市", level: "city", lat: 35.447, lng: 139.642, k: [], kk: [] },
+  { code: "141011", pref: "14", name: "横浜市鶴見区", level: "ward", parent: "141003", lat: 35.507, lng: 139.676, k: [], kk: [] },
+  { code: "141020", pref: "14", name: "横浜市神奈川区", level: "ward", parent: "141003", lat: 35.476, lng: 139.630, k: [], kk: [] },
+  { code: "141305", pref: "14", name: "川崎市", level: "city", lat: 35.530, lng: 139.703, k: [], kk: [] },
+  { code: "141313", pref: "14", name: "川崎市川崎区", level: "ward", parent: "141305", lat: 35.530, lng: 139.703, k: [], kk: [] },
+  { code: "142018", pref: "14", name: "横須賀市", level: "city", lat: 35.281, lng: 139.672, k: [], kk: [] },
+  { code: "143014", pref: "14", name: "葉山町", level: "city", county: "三浦郡", lat: 35.272, lng: 139.585, k: [], kk: [] },
 ];
 
 test("wards: 政令指定都市は行政区ごとに1件ずつ並ぶ（既定）", () => {
   assert.deepEqual(buildMunicipalities(RECORDS, "14"), [
-    { municipality: "横浜市", ward: ["鶴見区"] },
-    { municipality: "横浜市", ward: ["神奈川区"] },
-    { municipality: "川崎市", ward: ["川崎区"] },
-    { municipality: "横須賀市" },
-    { municipality: "葉山町" },
+    { municipality: "横浜市", ward: ["鶴見区"], lat: 35.507, lng: 139.676 },
+    { municipality: "横浜市", ward: ["神奈川区"], lat: 35.476, lng: 139.63 },
+    { municipality: "川崎市", ward: ["川崎区"], lat: 35.53, lng: 139.703 },
+    { municipality: "横須賀市", lat: 35.281, lng: 139.672 },
+    { municipality: "葉山町", lat: 35.272, lng: 139.585 },
   ]);
 });
 
 test("nested: 政令指定都市は市1件に区がまとまる", () => {
   assert.deepEqual(buildMunicipalities(RECORDS, "14", "nested"), [
-    { municipality: "横浜市", ward: ["鶴見区", "神奈川区"] },
-    { municipality: "川崎市", ward: ["川崎区"] },
-    { municipality: "横須賀市" },
-    { municipality: "葉山町" },
+    // まとめた側は市そのものの代表点（鶴見区の 35.507 ではない）
+    { municipality: "横浜市", ward: ["鶴見区", "神奈川区"], lat: 35.447, lng: 139.642 },
+    { municipality: "川崎市", ward: ["川崎区"], lat: 35.53, lng: 139.703 },
+    { municipality: "横須賀市", lat: 35.281, lng: 139.672 },
+    { municipality: "葉山町", lat: 35.272, lng: 139.585 },
   ]);
 });
 
@@ -67,8 +71,8 @@ test("政令指定都市の本体レコードは単独では出さない", () =>
 
 test("特別区は単独の市区町村として出る（市と区に割らない）", () => {
   assert.deepEqual(buildMunicipalities(RECORDS, "13"), [
-    { municipality: "千代田区" },
-    { municipality: "瑞穂町" },
+    { municipality: "千代田区", lat: 35.694, lng: 139.753 },
+    { municipality: "瑞穂町", lat: 35.771, lng: 139.353 },
   ]);
 });
 
@@ -76,7 +80,7 @@ test("郡名は出力に含めない（county は別フィールドに持つだ�
   const hit = buildMunicipalities(RECORDS, "14").find(
     (m) => m.municipality === "葉山町",
   );
-  assert.deepEqual(hit, { municipality: "葉山町" });
+  assert.deepEqual(hit, { municipality: "葉山町", lat: 35.272, lng: 139.585 });
 });
 
 test("並びは団体コード順", () => {
@@ -131,6 +135,8 @@ test("listMunicipalities: 出典つきで返る", async () => {
   assert.deepEqual(municipalities[0], {
     municipality: "横浜市",
     ward: ["鶴見区"],
+    lat: 35.507,
+    lng: 139.676,
   });
   assert.deepEqual(attribution, ["デジタル庁 アドレス・ベース・レジストリ"]);
 });
@@ -142,6 +148,8 @@ test("listMunicipalities: designatedCity オプションが効く", async () => 
   assert.deepEqual(municipalities[0], {
     municipality: "横浜市",
     ward: ["鶴見区", "神奈川区"],
+    lat: 35.447,
+    lng: 139.642,
   });
 });
 
@@ -166,4 +174,51 @@ test("listMunicipalities: cities.json は1回しか取りに行かない", async
   await geocoder.listMunicipalities(14);
   await geocoder.listMunicipalities(13);
   assert.equal(calls, 1);
+});
+
+test("buildPrefectures: 都道府県だけを座標つきでコード順に返す", () => {
+  assert.deepEqual(buildPrefectures(RECORDS), [
+    { code: "13", name: "東京都", lat: 35.68, lng: 139.76 },
+    { code: "14", name: "神奈川県", lat: 35.44, lng: 139.63 },
+  ]);
+});
+
+test("listPrefectures: 出典つきで返り、cities.json を使い回す", async () => {
+  let calls = 0;
+  const geocoder = createGeocoder({
+    fetcher: {
+      async get(path) {
+        calls += 1;
+        if (path === "cities.json")
+          return { generated: "test", source: "test", cities: RECORDS };
+        throw new Error(`unexpected fetch: ${path}`);
+      },
+    },
+  });
+  const { prefectures, attribution } = await geocoder.listPrefectures();
+  assert.deepEqual(
+    prefectures.map((p) => p.name),
+    ["東京都", "神奈川県"],
+  );
+  assert.deepEqual(attribution, ["デジタル庁 アドレス・ベース・レジストリ"]);
+
+  // 市区町村一覧と同じ索引を共有する
+  await geocoder.listMunicipalities(14);
+  assert.equal(calls, 1);
+});
+
+test("wards と nested で代表点が指す団体が変わる", () => {
+  const w = buildMunicipalities(RECORDS, "14")[0];
+  const n = buildMunicipalities(RECORDS, "14", "nested")[0];
+  assert.equal(w.lat, 35.507, "wards は行政区（鶴見区）の代表点");
+  assert.equal(n.lat, 35.447, "nested は市（横浜市）の代表点");
+});
+
+test("全件に座標が入る", () => {
+  for (const mode of ["wards", "nested"]) {
+    for (const m of buildMunicipalities(RECORDS, "14", mode)) {
+      assert.ok(Number.isFinite(m.lat), `${m.municipality} lat`);
+      assert.ok(Number.isFinite(m.lng), `${m.municipality} lng`);
+    }
+  }
 });
