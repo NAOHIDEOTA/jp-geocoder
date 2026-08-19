@@ -698,7 +698,7 @@
       .rescol {
         display: flex;
         flex-direction: column;
-        gap: 0.55rem;
+        gap: 0.6rem;
         min-width: 0;
         max-height: 460px;
       }
@@ -714,6 +714,7 @@
         display: flex;
         flex-direction: column;
         min-height: 0;
+        border-radius: inherit;
       }
 
       /* ---- 地図と結果を横に並べる ---- */
@@ -926,13 +927,9 @@
             <div class="map" id="gmap"></div>
             <div class="rescol">
               <div class="result" id="gresult" hidden></div>
-
-              <div class="card"></div>
-              <div class="scroll">
-                <div id="gout" class="empty">
-                  <span class="ico">📍</span
-                  >住所を入力すると、ここに結果が出ます
-                </div>
+              <div class="card">
+                <div class="scroll"><div id="gout" class="empty">
+                  <span class="ico">📍</span>住所を入力すると、ここに結果が出ます</div></div>
               </div>
             </div>
           </div>
@@ -1118,13 +1115,9 @@
             <div class="map" id="pmap"></div>
             <div class="rescol">
               <div class="result" id="presult" hidden></div>
-
-              <div class="card"></div>
-              <div class="scroll">
-                <div id="pout" class="empty">
-                  <span class="ico">🗾</span
-                  >「実行する」を押すと、ここに結果が出ます
-                </div>
+              <div class="card">
+                <div class="scroll"><div id="pout" class="empty">
+                  <span class="ico">🗾</span>「実行する」を押すと、ここに結果が出ます</div></div>
               </div>
             </div>
           </div>
@@ -1250,13 +1243,9 @@
             <div class="map" id="mmap"></div>
             <div class="rescol">
               <div class="result" id="mresult" hidden></div>
-
-              <div class="card"></div>
-              <div class="scroll">
-                <div id="mout" class="empty">
-                  <span class="ico">🏙</span
-                  >都道府県を選ぶと、ここに結果が出ます
-                </div>
+              <div class="card">
+                <div class="scroll"><div id="mout" class="empty">
+                  <span class="ico">🏙</span>都道府県を選ぶと、ここに結果が出ます</div></div>
               </div>
             </div>
           </div>
@@ -1400,13 +1389,9 @@
             <div class="map" id="rmap"></div>
             <div class="rescol">
               <div class="result" id="rresult" hidden></div>
-
-              <div class="card"></div>
-              <div class="scroll">
-                <div id="rout" class="empty">
-                  <span class="ico">🚉</span
-                  >住所を入力すると、ここに結果が出ます
-                </div>
+              <div class="card">
+                <div class="scroll"><div id="rout" class="empty">
+                  <span class="ico">🚉</span>住所を入力すると、ここに結果が出ます</div></div>
               </div>
             </div>
           </div>
@@ -1620,13 +1605,9 @@
             <div class="map" id="lmap"></div>
             <div class="rescol">
               <div class="result" id="lresult" hidden></div>
-
-              <div class="card"></div>
-              <div class="scroll">
-                <div id="lout" class="empty">
-                  <span class="ico">🚃</span
-                  >都道府県と路線を選ぶと、ここに結果が出ます
-                </div>
+              <div class="card">
+                <div class="scroll"><div id="lout" class="empty">
+                  <span class="ico">🚃</span>都道府県と路線を選ぶと、ここに結果が出ます</div></div>
               </div>
             </div>
           </div>
