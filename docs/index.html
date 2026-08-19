@@ -442,7 +442,9 @@
         </li>
         <li>
           <b>住所 → 最寄り駅</b>
-          <span>全国1万駅。座標を経由して、住所からそのまま最寄り駅を出せます。</span>
+          <span
+            >全国1万駅。座標を経由して、住所からそのまま最寄り駅を出せます。</span
+          >
         </li>
         <li>
           <b>どこまで解けたかを必ず返す</b>
@@ -459,29 +461,28 @@
       </nav>
 
       <section id="tab-geo">
+        <form id="f">
+          <input
+            id="q"
+            type="search"
+            placeholder="東京都世田谷区太子堂5-5-5"
+            autocomplete="off"
+          />
+          <button type="submit">検索</button>
+        </form>
 
-      <form id="f">
-        <input
-          id="q"
-          type="search"
-          placeholder="東京都世田谷区太子堂5-5-5"
-          autocomplete="off"
-        />
-        <button type="submit">検索</button>
-      </form>
+        <!-- OK / NG がひと目で分かるステータス行 -->
+        <div class="status" id="status"></div>
 
-      <!-- OK / NG がひと目で分かるステータス行 -->
-      <div class="status" id="status"></div>
+        <div class="samples" id="samples"></div>
 
-      <div class="samples" id="samples"></div>
+        <div id="map"></div>
 
-      <div id="map"></div>
+        <div class="wrap">
+          <div id="out" class="empty">住所を入力してください。</div>
+        </div>
 
-      <div class="wrap">
-        <div id="out" class="empty">住所を入力してください。</div>
-      </div>
-
-      <!-- geocode() が返した JSON をそのまま見せる（API利用者向け） -->
+        <!-- geocode() が返した JSON をそのまま見せる（API利用者向け） -->
         <details class="raw" id="rawbox" open>
           <summary>レスポンス JSON</summary>
           <pre id="raw"></pre>
@@ -499,11 +500,17 @@
             ><span class="badge lv-parcel">parcel</span>筆（地番）</span
           >
           <span class="row"><span class="badge lv-oaza">oaza</span>町字</span>
-          <span class="row"><span class="badge lv-city">city</span>市区町村</span>
-          <span class="row"><span class="badge lv-pref">pref</span>都道府県</span>
+          <span class="row"
+            ><span class="badge lv-city">city</span>市区町村</span
+          >
+          <span class="row"
+            ><span class="badge lv-pref">pref</span>都道府県</span
+          >
           <span class="t">accuracy — その座標の品質</span>
           <span class="row"><code>surveyed</code> 測量済み。実測点</span>
-          <span class="row"><code>legacy</code> 公図由来。数十m〜百mずれうる</span>
+          <span class="row"
+            ><code>legacy</code> 公図由来。数十m〜百mずれうる</span
+          >
           <span class="row"
             ><code>representative</code> 代表点。探した対象の点ではない</span
           >
@@ -519,9 +526,13 @@
           </div>
         </div>
         <p class="hint">
-          <code>designatedCity</code> は<strong>政令指定都市20市の見せ方だけ</strong>を
-          切り替えます。<code>wards</code> は行政区ごとに1件（横浜市なら18件並ぶ）、
-          <code>nested</code> は市1件に区をまとめます。 特別区・郡部の町村・通常の市は
+          <code>designatedCity</code>
+          は<strong>政令指定都市20市の見せ方だけ</strong>を 切り替えます。<code
+            >wards</code
+          >
+          は行政区ごとに1件（横浜市なら18件並ぶ）、
+          <code>nested</code> は市1件に区をまとめます。
+          特別区・郡部の町村・通常の市は
           どちらでも同じ形です。郡名は含めません（「三浦郡葉山町」ではなく「葉山町」）。
         </p>
 
@@ -572,8 +583,9 @@
 
       <footer>
         このページはビルド済みの <code>lib/</code> をそのまま読み込み、データは
-        CDN 上の静的 JSON から取っています。検索のたびに何ファイル取りに行ったかは
-        結果行の <code>fetch</code> に出ます（一度読んだものは再取得しません）。
+        CDN 上の静的 JSON
+        から取っています。検索のたびに何ファイル取りに行ったかは 結果行の
+        <code>fetch</code> に出ます（一度読んだものは再取得しません）。
         <br />
         出典: デジタル庁 アドレス・ベース・レジストリ / 国土交通省 位置参照情報
         —
@@ -703,6 +715,25 @@
           /[&<>"]/g,
           (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c],
         );
+
+      /**
+       * 配信物が取れなかったときの表示。
+       * 未配信のファイルがあると画面が沈黙してしまい原因が追えないので、
+       * どのファイルで失敗したかまで出す。
+       */
+      function fail(statusEl, outEl, rawEl, file, error) {
+        const msg = String(error?.message ?? error);
+        const notFound = /-> 40\d|404/.test(msg);
+        statusEl.innerHTML =
+          `<span class="chip err">✕ ${esc(file)} を読めません</span>` +
+          `<span class="detail">${esc(msg)}</span>`;
+        outEl.className = "empty";
+        outEl.textContent = notFound
+          ? `${file} がまだ配信されていません。make pages-deploy で配信するか、` +
+            `?base=/v1 のようにローカルの配信物を指定してください。`
+          : `${file} の取得に失敗しました。`;
+        rawEl.textContent = msg;
+      }
 
       /** 入力欄とステータス行に OK / NG を反映する */
       function setState(kind, text, detail = "") {
@@ -884,9 +915,16 @@
         }
         const before = fetchCount;
         const t = performance.now();
-        const res = await geo.listMunicipalities(code, {
-          designatedCity: muniMode,
-        });
+        let res;
+        try {
+          res = await geo.listMunicipalities(code, {
+            designatedCity: muniMode,
+          });
+        } catch (e) {
+          // 配信物が取れないと黙って何も起きないので、必ず理由を出す
+          fail(muniStatus, muniOut, muniRaw, "cities.json", e);
+          return;
+        }
         const ms = performance.now() - t;
         muniRaw.textContent = JSON.stringify(res, null, 2);
 
@@ -955,10 +993,18 @@
         const my = ++rseq;
         const before = fetchCount;
         const t = performance.now();
-        const res = await geo.nearestStationsByAddress(input, {
-          limit: 8,
-          groupByStation: rgroup.checked,
-        });
+        let res;
+        try {
+          res = await geo.nearestStationsByAddress(input, {
+            limit: 8,
+            groupByStation: rgroup.checked,
+          });
+        } catch (e) {
+          if (my !== rseq) return;
+          rlayer.clearLayers();
+          fail(railStatus, railOut, railRaw, "rail.json", e);
+          return;
+        }
         if (my !== rseq) return;
         const ms = performance.now() - t;
         railRaw.textContent = JSON.stringify(res, null, 2);
@@ -1023,7 +1069,6 @@
         e.preventDefault();
         runRail(rq.value);
       });
-
     </script>
   </body>
 </html>
