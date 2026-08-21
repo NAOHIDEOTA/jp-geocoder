@@ -2,12 +2,12 @@
 
 [![npm version](https://img.shields.io/npm/v/jp-geocoder.svg)](https://www.npmjs.com/package/jp-geocoder)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
-[![GitHub](https://img.shields.io/github/stars/NAOHIDEOTA/jp-geocoder?style=social)](https://github.com/NAOHIDEOTA/jp-geocoder)
+[![GitHub](https://img.shields.io/github/stars/naohidden/jp-geocoder?style=social)](https://github.com/naohidden/jp-geocoder)
 
 日本の住所を扱うための、**サーバ不要・DB不要・APIキー不要**の JavaScript ライブラリ。
 国のオープンデータから生成した静的 JSON を CDN から読むだけで動きます。
 
-**[Live Demo](https://naohideota.github.io/jp-geocoder/docs/)** — ブラウザだけで全機能を試せます
+**[Live Demo](https://naohidden.github.io/jp-geocoder/docs/)** — ブラウザだけで全機能を試せます
 
 ```ts
 import { createGeocoder } from "jp-geocoder";
@@ -443,10 +443,10 @@ make demo       # デモをローカルで確認
 
 ## Contributing
 
-[GitHub Issues](https://github.com/NAOHIDEOTA/jp-geocoder/issues) でバグ報告・機能リクエストを受け付けています。
+[GitHub Issues](https://github.com/naohidden/jp-geocoder/issues) でバグ報告・機能リクエストを受け付けています。
 
 ## License
 
-コードは [MIT](./LICENSE) - Copyright (c) 2026 NAOHIDEOTA
+コードは [MIT](./LICENSE) - Copyright (c) 2026 naohidden
 
 データのライセンスは [Data Sources](#data-sources) のとおり別です。

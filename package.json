@@ -34,15 +34,15 @@
     "緯度経度"
   ],
   "license": "MIT",
-  "author": "NAOHIDEOTA",
+  "author": "naohidden",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/NAOHIDEOTA/jp-geocoder.git"
+    "url": "git+https://github.com/naohidden/jp-geocoder.git"
   },
   "bugs": {
-    "url": "https://github.com/NAOHIDEOTA/jp-geocoder/issues"
+    "url": "https://github.com/naohidden/jp-geocoder/issues"
   },
-  "homepage": "https://github.com/NAOHIDEOTA/jp-geocoder#readme",
+  "homepage": "https://github.com/naohidden/jp-geocoder#readme",
   "engines": {
     "node": ">=20"
   },
