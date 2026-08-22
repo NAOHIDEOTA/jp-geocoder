@@ -33,7 +33,7 @@ demo: build
 	@echo "http://localhost:$(or $(DEMO_PORT),8081)/"
 
 
-# ---- ビルド入力データの取得（DOC.md §2 / §13） -----------------------------
+# ---- ビルド入力データの取得 -----------------------------
 data-all: data-part-catalog data-part-abr data-part-isj data-part-codh
 	@echo "取得完了。次は make build-data"
 
@@ -71,7 +71,7 @@ measure-source:
 
 
 # ---- 索引ビルド（data/ → dist-data/v1） -------------------------------------
-# 配信物（dist-data/v1、約2.0GB）を生成し、最後に検証ゲートを通す
+# 配信物（dist-data/v1、約2.0GB）を生成
 build-data: build-part-version build-part-cities build-part-towns build-part-rsdt \
             build-part-parcel build-part-alias build-part-rail validate
 
@@ -79,37 +79,37 @@ build-data: build-part-version build-part-cities build-part-towns build-part-rsd
 build-part-version:
 	docker exec jp-geocoder node scripts/build/build-version.mjs
 
-# 都道府県・市区町村の索引（cities.json）。他のすべてが参照する
+# 都道府県・市区町村の索引
 build-part-cities:
 	docker exec jp-geocoder node scripts/build/build-cities.mjs
 
-# 町字の索引（oaza/ kana/ shards.json）。ABR に座標が無いものを ISJ で補完する
+# 町字の索引（oaza/ kana/ shards.json）。
 build-part-towns:
 	docker exec jp-geocoder node --max-old-space-size=6144 scripts/build/build-towns.mjs
 
-# 住居表示（番・号）の索引（rsdt/）。号は番からの差分で持つ
+# 住居表示（番・号）の索引（rsdt/）。
 build-part-rsdt:
 	docker exec jp-geocoder node --max-old-space-size=8192 scripts/build/build-rsdt.mjs
 
-# 地番（筆）の索引（parcel/）。列指向＋累積差分で符号化する
+# 地番（筆）の索引（parcel/）。
 build-part-parcel:
 	docker exec jp-geocoder node --max-old-space-size=8192 scripts/build/build-parcel.mjs
 
-# 旧自治体名のエイリアス（alias.json）。町字索引を読むので towns の後に実行する
+# 旧自治体名のエイリアス（alias.json）。
 build-part-alias:
 	docker exec jp-geocoder node --max-old-space-size=6144 scripts/build/build-alias.mjs
 
-# 駅・路線の索引（rail.json）。1ファイル・全国分。data-part-ekidata が前提
+# 駅・路線の索引（rail.json）。1
 build-part-rail:
 	docker exec jp-geocoder node scripts/build/build-rail.mjs
 
-# 配信物の検証ゲート。日本の範囲内か等の絶対検査＋前回ビルド(metrics.json)との回帰比較
+# 配信物の検証ゲート。
 validate:
 	docker exec jp-geocoder node --max-old-space-size=8192 scripts/build/validate.mjs
 
 
 # ---- 実装の検証 -------------------------------------------------------------
-# 正規化・住所分解・検索の挙動を実データで確認する（キー / 解析 / 検索 / 町字 / 番号）
+# 正規化・住所分解・検索の挙動を実データで確認する
 verify:
 	docker exec jp-geocoder node scripts/verify/verify-keys.mjs
 	docker exec jp-geocoder node scripts/verify/verify-parse.mjs
@@ -117,7 +117,7 @@ verify:
 	docker exec jp-geocoder node scripts/verify/verify-town.mjs
 	docker exec jp-geocoder node scripts/verify/verify-rsdt.mjs
 
-# 返した座標を外部データ（国交省 位置参照情報）と突き合わせて距離を測る。
+# 返した座標を外部データと突き合わせて距離を測る。
 verify-accuracy:
 	docker exec jp-geocoder node --max-old-space-size=6144 scripts/verify/verify-accuracy.mjs $(or $(N),3000)
 

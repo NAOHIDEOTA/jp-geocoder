@@ -1,14 +1,14 @@
 {
   "name": "jp-geocoder",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "Japanese address geocoder powered by the Digital Agency Address Base Registry. No server, no database — static JSON over CDN. 日本の住所文字列を緯度経度に変換する",
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "exports": {
     ".": {
-      "import": "./dist/index.js",
-      "types": "./dist/index.d.ts"
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
     }
   },
   "files": [
